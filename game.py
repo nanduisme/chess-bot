@@ -10,8 +10,33 @@ class Piece:
     def valid_moves(self, pos):
         pass  # To be implemented in subclasses
 
+class Pawn(Piece):
+    def valid_moves(self, board, pos, en_passant_target=None):
+        moves = []
+        x, y = pos
+        direction = -1 if self.color == WHITE else 1
+
+        # Move forward
+        if 0 <= x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
+            moves.append((x + direction, y))
+            # Two-square move from start
+            if not self.has_moved and 0 <= x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
+                moves.append((x + 2 * direction, y))
+
+        # Captures
+        for dy in [-1, 1]:
+            if 0 <= y + dy < 8:
+                target = board.get_piece((x + direction, y + dy))
+                if target != " " and target.color != self.color:
+                    moves.append((x + direction, y + dy))
+                # En Passant capture
+                if en_passant_target == (x + direction, y + dy):
+                    moves.append((x + direction, y + dy))
+
+        return moves
+
 class Rook(Piece):
-    def valid_moves(self, board, pos):
+    def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
         return self._generate_sliding_moves(board, pos, directions)
 
@@ -21,26 +46,33 @@ class Rook(Piece):
         for dx, dy in directions:
             nx, ny = x + dx, y + dy
             while 0 <= nx < 8 and 0 <= ny < 8:
-                target = board.get_piece((nx, ny))
-                if target == ' ':
-                    moves.append((nx, ny))
-                elif target.color != self.color:
-                    moves.append((nx, ny))
-                    break
-                else:
-                    break
+                if 0 <= nx < 8 and 0 <= ny < 8:
+                    target = board.get_piece((nx, ny))
+                    if target == ' ':
+                        moves.append((nx, ny))
+                    elif target.color != self.color:
+                        moves.append((nx, ny))
+                        break
+                    else:
+                        break
                 nx, ny = nx + dx, ny + dy
         return moves
 
 class Knight(Piece):
-    def valid_moves(self, board, pos):
+    def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
         x, y = pos
-        moves = [(x + dx, y + dy) for dx, dy in directions if 0 <= x + dx < 8 and 0 <= y + dy < 8]
-        return [move for move in moves if board.get_piece(move) == ' ' or board.get_piece(move).color != self.color]
+        valid_moves = []
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < 8 and 0 <= ny < 8:
+                target = board.get_piece((nx, ny))
+                if target is " " or target.color != self.color:
+                    valid_moves.append((nx, ny))
+        return valid_moves
 
 class Bishop(Piece):
-    def valid_moves(self, board, pos):
+    def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
         return self._generate_sliding_moves(board, pos, directions)
 
@@ -62,38 +94,23 @@ class Bishop(Piece):
         return moves
 
 class Queen(Piece):
-    def valid_moves(self, board, pos):
+    def valid_moves(self, board, pos, en_passant_target=None):
         return Rook(self.color).valid_moves(board, pos) + Bishop(self.color).valid_moves(board, pos)
 
 class King(Piece):
-    def valid_moves(self, board, pos):
-        directions = [(-1, 0), (1, 0), (0, 1), (0, -1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
-        moves = [(pos[0] + dx, pos[1] + dy) for dx, dy in directions if 0 <= pos[0] + dx < 8 and 0 <= pos[1] + dy < 8]
-        return [move for move in moves if board.get_piece(move) == ' ' or board.get_piece(move).color != self.color]
-
-class Pawn(Piece):
     def valid_moves(self, board, pos, en_passant_target=None):
+        directions = [
+            (1, 0), (-1, 0), (0, 1), (0, -1),  # Horizontal and vertical moves
+            (1, 1), (1, -1), (-1, 1), (-1, -1)  # Diagonal moves
+        ]
         moves = []
         x, y = pos
-        direction = -1 if self.color == WHITE else 1
-
-        # Move forward
-        if board.get_piece((x + direction, y)) == ' ':
-            moves.append((x + direction, y))
-            # Two-square move from start
-            if not self.has_moved and board.get_piece((x + 2 * direction, y)) == ' ':
-                moves.append((x + 2 * direction, y))
-
-        # Captures
-        for dy in [-1, 1]:
-            if 0 <= y + dy < 8:
-                target = board.get_piece((x + direction, y + dy))
-                if target != ' ' and target.color != self.color:
-                    moves.append((x + direction, y + dy))
-                # En Passant capture
-                if en_passant_target == (x + direction, y + dy):
-                    moves.append((x + direction, y + dy))
-
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            if 0 <= nx < 8 and 0 <= ny < 8:
+                target = board.get_piece((nx, ny))
+                if target == ' ' or target.color != self.color:
+                    moves.append((nx, ny))
         return moves
 
 # Chess Board Setup
@@ -129,7 +146,8 @@ class ChessBoard:
 
     def get_piece(self, pos):
         x, y = pos
-        return self.board[x][y]
+        piece = self.board[x][y]
+        return piece if piece != ' ' else " "
 
     def move_piece(self, start, end):
         sx, sy = start
@@ -141,12 +159,20 @@ class ChessBoard:
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
-        if piece == ' ' or piece.color != self.turn:
+        print(f"Trying to move piece at {start} to {end}")
+        if not piece:
+            print("No piece at start position.")
             return False
-        if end not in piece.valid_moves(self, start, self.en_passant_target):
+        if piece.color != self.turn:
+            print("Piece belongs to the opponent.")
+            return False
+        valid_moves = piece.valid_moves(self, start, self.en_passant_target)
+        print(f"Valid moves for piece at {start}: {valid_moves}")
+        if end not in valid_moves:
+            print("End position is not a valid move.")
             return False
         return True
-
+        
     def is_in_check(self, color):
         # Simplified check detection logic
         king_pos = None
@@ -167,7 +193,7 @@ class ChessBoard:
         for x in range(8):
             for y in range(8):
                 piece = self.get_piece((x, y))
-                if piece.color == self.turn:
+                if piece != ' ' and piece.color == self.turn:
                     for move in piece.valid_moves(self, (x, y)):
                         start = (x, y)
                         end = move
@@ -366,6 +392,7 @@ def play_game():
 
         # Player move (simple manual input for demonstration)
         start = tuple(map(int, input(f"{board.turn.capitalize()}'s turn. Enter start position (x y): ").split()))
+        print(start)
         end = tuple(map(int, input("Enter end position (x y): ").split()))
 
         if board.is_valid_move(start, end):
