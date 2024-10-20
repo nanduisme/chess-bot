@@ -1,51 +1,386 @@
+# Constants
+WHITE, BLACK = 'white', 'black'
+
+# Chess Pieces Classes
 class Piece:
-    ...
-    
-class Pos:
-    @classmethod
-    def from_pair(cls, rank, file) -> Pos:
-        '''
-        returns a Pos object where self.pos is a 6 bit number where the number is 0brrrfff
-        '''
+    def __init__(self, color):
+        self.color = color
+        self.has_moved = False  # For castling
 
-        return cls()
+    def valid_moves(self, pos):
+        pass  # To be implemented in subclasses
 
-    def get_rank(self) -> int:
-        return 0
+class Rook(Piece):
+    def valid_moves(self, board, pos):
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+        return self._generate_sliding_moves(board, pos, directions)
 
-    def get_file(self) -> int:
-        return 0
-    
+    def _generate_sliding_moves(self, board, pos, directions):
+        moves = []
+        x, y = pos
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            while 0 <= nx < 8 and 0 <= ny < 8:
+                target = board.get_piece((nx, ny))
+                if target == ' ':
+                    moves.append((nx, ny))
+                elif target.color != self.color:
+                    moves.append((nx, ny))
+                    break
+                else:
+                    break
+                nx, ny = nx + dx, ny + dy
+        return moves
 
-class Board:
-    '''
-    Main class where the game takes place
-    '''
+class Knight(Piece):
+    def valid_moves(self, board, pos):
+        directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
+        x, y = pos
+        moves = [(x + dx, y + dy) for dx, dy in directions if 0 <= x + dx < 8 and 0 <= y + dy < 8]
+        return [move for move in moves if board.get_piece(move) == ' ' or board.get_piece(move).color != self.color]
 
-    @classmethod
-    def from_fen(cls, fen) -> Board:
-        '''
-        Returns a Board object that corresponds to the given fen 
-        '''
+class Bishop(Piece):
+    def valid_moves(self, board, pos):
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
+        return self._generate_sliding_moves(board, pos, directions)
 
-        return cls()
+    def _generate_sliding_moves(self, board, pos, directions):
+        moves = []
+        x, y = pos
+        for dx, dy in directions:
+            nx, ny = x + dx, y + dy
+            while 0 <= nx < 8 and 0 <= ny < 8:
+                target = board.get_piece((nx, ny))
+                if target == ' ':
+                    moves.append((nx, ny))
+                elif target.color != self.color:
+                    moves.append((nx, ny))
+                    break
+                else:
+                    break
+                nx, ny = nx + dx, ny + dy
+        return moves
 
-    def get_piece(self, pos: Pos) -> Piece | None:
-        '''
-        Returns the piece at given position
-        '''
-        return None
+class Queen(Piece):
+    def valid_moves(self, board, pos):
+        return Rook(self.color).valid_moves(board, pos) + Bishop(self.color).valid_moves(board, pos)
 
-    def get_plays(self, pos: Pos) -> list[Pos]:
-        '''
-        Returns a list of all legal plays given a position
-        '''
+class King(Piece):
+    def valid_moves(self, board, pos):
+        directions = [(-1, 0), (1, 0), (0, 1), (0, -1), (-1, -1), (-1, 1), (1, -1), (1, 1)]
+        moves = [(pos[0] + dx, pos[1] + dy) for dx, dy in directions if 0 <= pos[0] + dx < 8 and 0 <= pos[1] + dy < 8]
+        return [move for move in moves if board.get_piece(move) == ' ' or board.get_piece(move).color != self.color]
 
-        return []
+class Pawn(Piece):
+    def valid_moves(self, board, pos, en_passant_target=None):
+        moves = []
+        x, y = pos
+        direction = -1 if self.color == WHITE else 1
 
-    def get_fen(self) -> str:
-        '''
-        Returns the fen string of the current board
-        '''
+        # Move forward
+        if board.get_piece((x + direction, y)) == ' ':
+            moves.append((x + direction, y))
+            # Two-square move from start
+            if not self.has_moved and board.get_piece((x + 2 * direction, y)) == ' ':
+                moves.append((x + 2 * direction, y))
 
-        return ""
+        # Captures
+        for dy in [-1, 1]:
+            if 0 <= y + dy < 8:
+                target = board.get_piece((x + direction, y + dy))
+                if target != ' ' and target.color != self.color:
+                    moves.append((x + direction, y + dy))
+                # En Passant capture
+                if en_passant_target == (x + direction, y + dy):
+                    moves.append((x + direction, y + dy))
+
+        return moves
+
+# Chess Board Setup
+class ChessBoard:
+    def __init__(self):
+        self.board = self.initialize_board()
+        self.turn = WHITE
+        self.en_passant_target = None
+        self.castling_rights = {
+            WHITE: {'kingside': True, 'queenside': True},
+            BLACK: {'kingside': True, 'queenside': True}
+        }
+
+    def initialize_board(self):
+        return [
+            [Rook(BLACK), Knight(BLACK), Bishop(BLACK), Queen(BLACK), King(BLACK), Bishop(BLACK), Knight(BLACK), Rook(BLACK)],
+            [Pawn(BLACK), Pawn(BLACK), Pawn(BLACK), Pawn(BLACK), Pawn(BLACK), Pawn(BLACK), Pawn(BLACK), Pawn(BLACK)],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE)],
+            [Rook(WHITE), Knight(WHITE), Bishop(WHITE), Queen(WHITE), King(WHITE), Bishop(WHITE), Knight(WHITE), Rook(WHITE)]
+        ]
+
+    def print_board(self):
+        piece_symbols = {
+            Rook: 'R', Knight: 'N', Bishop: 'B', Queen: 'Q', King: 'K', Pawn: 'P'
+        }
+        for row in self.board:
+            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]))
+        print()
+
+    def get_piece(self, pos):
+        x, y = pos
+        return self.board[x][y]
+
+    def move_piece(self, start, end):
+        sx, sy = start
+        ex, ey = end
+        self.board[ex][ey] = self.board[sx][sy]
+        self.board[sx][sy] = ' '
+        piece = self.get_piece(end)
+        piece.has_moved = True  # Track if the piece has moved
+
+    def is_valid_move(self, start, end):
+        piece = self.get_piece(start)
+        if piece == ' ' or piece.color != self.turn:
+            return False
+        if end not in piece.valid_moves(self, start, self.en_passant_target):
+            return False
+        return True
+
+    def is_in_check(self, color):
+        # Simplified check detection logic
+        king_pos = None
+        for x in range(8):
+            for y in range(8):
+                if isinstance(self.get_piece((x, y)), King) and self.get_piece((x, y)).color == color:
+                    king_pos = (x, y)
+                    break
+        for x in range(8):
+            for y in range(8):
+                target_piece = self.get_piece((x, y))
+                if target_piece != ' ' and target_piece.color != color:
+                    if king_pos in target_piece.valid_moves(self, (x, y)):
+                        return True
+        return False
+
+    def check_checkmate(self):
+        for x in range(8):
+            for y in range(8):
+                piece = self.get_piece((x, y))
+                if piece.color == self.turn:
+                    for move in piece.valid_moves(self, (x, y)):
+                        start = (x, y)
+                        end = move
+                        self.move_piece(start, end)
+                        if not self.is_in_check(self.turn):
+                            self.move_piece(end, start)  # Undo move
+                            return False
+                        self.move_piece(end, start)  # Undo move
+        return True
+
+
+# Tree for Move History
+class TreeNode:
+    def __init__(self, board_state, move=None, parent=None):
+        self.board_state = board_state  # Current state of the board
+        self.move = move  # Move that led to this state
+        self.children = []  # Subsequent game states (valid moves)
+        self.parent = parent  # Previous state for backtracking
+
+    def add_child(self, child_node):
+        self.children.append(child_node)
+
+    def get_children(self):
+        return self.children
+
+    def get_parent(self):
+        return self.parent
+
+class ChessGameTree:
+    def __init__(self, initial_board):
+        self.root = TreeNode(initial_board)  # Initial game state
+        self.current_node = self.root
+
+    def make_move(self, new_board_state, move):
+        new_node = TreeNode(new_board_state, move, self.current_node)
+        self.current_node.add_child(new_node)
+        self.current_node = new_node
+
+    def undo_move(self):
+        if self.current_node.get_parent():
+            self.current_node = self.current_node.get_parent()
+
+# Graph for Move Validation
+class ChessGraph:
+    def __init__(self):
+        self.graph = {}
+
+    def add_node(self, square):
+        if square not in self.graph:
+            self.graph[square] = []
+
+    def add_edge(self, from_square, to_square):
+        if from_square in self.graph:
+            self.graph[from_square].append(to_square)
+
+    def get_neighbors(self, square):
+        return self.graph.get(square, [])
+
+class ChessBoardGraph:
+    def __init__(self):
+        self.graph = ChessGraph()
+        self.initialize_graph()
+
+    def initialize_graph(self):
+        for x in range(8):
+            for y in range(8):
+                self.graph.add_node((x, y))  # Add each square
+
+    def generate_moves(self, pos):
+        # Generate valid moves from the graph
+        return self.graph.get_neighbors(pos)
+
+    def move_piece(self, start, end):
+        # Ensure there is an edge (valid move) between start and end
+        if end in self.graph.get_neighbors(start):
+            return True
+        return False
+
+# Heap for Move Prioritization
+class CustomHeap:
+    def __init__(self):
+        self.heap = []
+
+    def insert(self, priority, move):
+        self.heap.append((priority, move))
+        self._heapify_up(len(self.heap) - 1)
+
+    def _heapify_up(self, index):
+        while index > 0:
+            parent = (index - 1) // 2
+            if self.heap[index][0] > self.heap[parent][0]:
+                self.heap[index], self.heap[parent] = self.heap[parent], self.heap[index]
+                index = parent
+            else:
+                break
+
+    def extract_max(self):
+        if len(self.heap) > 1:
+            self._swap(0, len(self.heap) - 1)
+            max_value = self.heap.pop()
+            self._heapify_down(0)
+        elif len(self.heap) == 1:
+            max_value = self.heap.pop()
+        else:
+            return None
+        return max_value[1]
+
+    def _heapify_down(self, index):
+        last_index = len(self.heap) - 1
+        while index <= last_index:
+            left_child = 2 * index + 1
+            right_child = 2 * index + 2
+            largest = index
+
+            if left_child <= last_index and self.heap[left_child][0] > self.heap[largest][0]:
+                largest = left_child
+            if right_child <= last_index and self.heap[right_child][0] > self.heap[largest][0]:
+                largest = right_child
+
+            if largest != index:
+                self._swap(index, largest)
+                index = largest
+            else:
+                break
+
+    def _swap(self, i, j):
+        self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
+
+class ChessMoveHeap:
+    def __init__(self):
+        self.move_heap = CustomHeap()
+
+    def add_move(self, move, priority):
+        self.move_heap.insert(priority, move)
+
+    def get_best_move(self):
+        return self.move_heap.extract_max()
+
+    def generate_priority_moves(self, moves):
+        for move in moves:
+            priority = self.evaluate_move(move)
+            self.add_move(move, priority)
+
+    def evaluate_move(self):
+        return 1  # Placeholder: actual evaluation logic
+
+# Directed Acyclic Graph (DAG) for Transposition Table (Move History Tracking)
+class ChessDAG:
+    def __init__(self):
+        self.nodes = {}
+
+    def add_node(self, board_hash):
+        if board_hash not in self.nodes:
+            self.nodes[board_hash] = []
+
+    def add_edge(self, from_board, to_board):
+        if from_board in self.nodes:
+            self.nodes[from_board].append(to_board)
+
+    def has_seen(self, board_hash):
+        return board_hash in self.nodes
+
+    def get_transitions(self, board_hash):
+        return self.nodes.get(board_hash, [])
+
+class ChessTranspositionDAG:
+    def __init__(self):
+        self.dag = ChessDAG()
+
+    def hash_board(self, board):
+        return hash(str(board))  # Simple board hashing based on its string representation
+
+    def store_position(self, board):
+        board_hash = self.hash_board(board)
+        self.dag.add_node(board_hash)
+
+    def check_repetition(self, board):
+        board_hash = self.hash_board(board)
+        return self.dag.has_seen(board_hash)
+
+    def add_transition(self, from_board, to_board):
+        from_hash = self.hash_board(from_board)
+        to_hash = self.hash_board(to_board)
+        self.dag.add_edge(from_hash, to_hash)
+
+# Game Loop without AI
+def play_game():
+    board = ChessBoard()
+    game_tree = ChessGameTree(initial_board=board.board)
+    transposition_dag = ChessTranspositionDAG()
+    # board_graph = ChessBoardGraph()
+    # move_heap = ChessMoveHeap()
+
+    while True:
+        board.print_board()
+
+        # Player move (simple manual input for demonstration)
+        start = tuple(map(int, input(f"{board.turn.capitalize()}'s turn. Enter start position (x y): ").split()))
+        end = tuple(map(int, input("Enter end position (x y): ").split()))
+
+        if board.is_valid_move(start, end):
+            board.move_piece(start, end)
+            transposition_dag.store_position(board.board)
+            game_tree.make_move(board.board, (start, end))
+            # Switch turns
+            board.turn = BLACK if board.turn == WHITE else WHITE
+            
+            # Check for checkmate
+            if board.check_checkmate():
+                print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
+                break
+        else:
+            print("Invalid move. Try again.")
+
+# Run the game
+play_game()
