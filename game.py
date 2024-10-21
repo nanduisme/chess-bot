@@ -63,6 +63,7 @@ class Rook(Piece):
 # Class for Knight Piece
 class Knight(Piece):
     def valid_moves(self, board, pos, en_passant_target=None):
+
         directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]  # Knight's L-shaped moves
         x, y = pos  # Current position of the knight
         valid_moves = []  # List to store valid moves
@@ -71,6 +72,7 @@ class Knight(Piece):
             if 0 <= nx < 8 and 0 <= ny < 8:  # Ensure the new position is within the board
                 target = board.get_piece((nx, ny))  # Get the piece at the new position
                 if target == " " or target.color != self.color:  # Move if it's empty or an opponent's piece
+
                     valid_moves.append((nx, ny))
         return valid_moves  # Return the list of valid moves
 
@@ -132,6 +134,13 @@ class ChessBoard:
             BLACK: {'kingside': True, 'queenside': True}
         }
 
+    @staticmethod
+    def file_rank_to_coords(file, rank):
+        # File is the letter and rank is the number
+
+        # Returns (rank, file)
+        return (int(rank) - 1, ord(file) - ord("A"))
+
     def initialize_board(self):
         return [
             [Rook(BLACK), Knight(BLACK), Bishop(BLACK), Queen(BLACK), King(BLACK), Bishop(BLACK), Knight(BLACK), Rook(BLACK)],
@@ -148,8 +157,10 @@ class ChessBoard:
         piece_symbols = {
             Rook: 'R', Knight: 'N', Bishop: 'B', Queen: 'Q', King: 'K', Pawn: 'P'
         }
-        for row in self.board:
-            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]))
+
+        print("A  B  C  D  E  F  G  H\n")
+        for i, row in enumerate(self.board):
+            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", i + 1)
         print()
 
     def get_piece(self, pos):
@@ -231,6 +242,12 @@ class TreeNode:
         # Return the parent node representing the previous game state
         return self.parent
 
+"""
+ChessGameTree allows for tracking the progression of a chess game, 
+maintaining a history of moves and board states in a tree structure. 
+This can be useful for features like undoing moves, analyzing game history, 
+or exploring different move sequences.
+"""
 class ChessGameTree:
     def __init__(self, initial_board):
          # Initialize the tree with the initial board state
@@ -250,28 +267,40 @@ class ChessGameTree:
         if self.current_node.get_parent():
             self.current_node = self.current_node.get_parent()
 
-# Graph for Move Validation
+"""
+Chess Graph for Move Validation
+This class represents a graph structure where each node is a square on the chessboard.
+Edges between nodes represent valid moves from one square to another.
+"""
 class ChessGraph:
     def __init__(self):
+         # Initialize the graph as an empty dictionary
         self.graph = {}
 
     def add_node(self, square):
+         # Add a node to the graph if it doesn't already exist
         if square not in self.graph:
             self.graph[square] = []
 
     def add_edge(self, from_square, to_square):
+         # Add an edge from one square to another, representing a valid move
         if from_square in self.graph:
             self.graph[from_square].append(to_square)
 
     def get_neighbors(self, square):
+        # Get all squares that can be reached from the given square
         return self.graph.get(square, [])
 
+"""
+ChessBoardGraph builds on ChessGraph by adding chess-specific methods for initializing the board and generating moves.
+"""
 class ChessBoardGraph:
     def __init__(self):
         self.graph = ChessGraph()
         self.initialize_graph()
 
     def initialize_graph(self):
+         # Initialize the graph with all squares on the chessboard
         for x in range(8):
             for y in range(8):
                 self.graph.add_node((x, y))  # Add each square
@@ -431,9 +460,12 @@ def play_game():
         board.print_board()
 
         # Player move (simple manual input for demonstration)
-        start = tuple(map(int, input(f"{board.turn.capitalize()}'s turn. Enter start position (x y): ").split()))
+        start = tuple(input(f"{board.turn.capitalize()}'s turn. Enter start position (FileRank): ").upper())
+        start = ChessBoard.file_rank_to_coords(start[0], start[1])
         print(start)
-        end = tuple(map(int, input("Enter end position (x y): ").split()))
+        end = tuple(input("Enter the end position (FileRank): ").upper())
+        end = ChessBoard.file_rank_to_coords(end[0], end[1])
+        print(end)
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
@@ -450,4 +482,5 @@ def play_game():
             print("Invalid move. Try again.")
 
 # Run the game
-play_game()
+if __name__ == "__main__":
+    play_game()
