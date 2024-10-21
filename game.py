@@ -67,7 +67,7 @@ class Knight(Piece):
             nx, ny = x + dx, y + dy
             if 0 <= nx < 8 and 0 <= ny < 8:
                 target = board.get_piece((nx, ny))
-                if target is " " or target.color != self.color:
+                if target == " " or target.color != self.color:
                     valid_moves.append((nx, ny))
         return valid_moves
 
@@ -124,6 +124,13 @@ class ChessBoard:
             BLACK: {'kingside': True, 'queenside': True}
         }
 
+    @staticmethod
+    def file_rank_to_coords(file, rank):
+        # File is the letter and rank is the number
+
+        # Returns (rank, file)
+        return (int(rank) - 1, ord(file) - ord("A"))
+
     def initialize_board(self):
         return [
             [Rook(BLACK), Knight(BLACK), Bishop(BLACK), Queen(BLACK), King(BLACK), Bishop(BLACK), Knight(BLACK), Rook(BLACK)],
@@ -140,8 +147,10 @@ class ChessBoard:
         piece_symbols = {
             Rook: 'R', Knight: 'N', Bishop: 'B', Queen: 'Q', King: 'K', Pawn: 'P'
         }
-        for row in self.board:
-            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]))
+
+        print("A  B  C  D  E  F  G  H\n")
+        for i, row in enumerate(self.board):
+            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", i + 1)
         print()
 
     def get_piece(self, pos):
@@ -391,9 +400,12 @@ def play_game():
         board.print_board()
 
         # Player move (simple manual input for demonstration)
-        start = tuple(map(int, input(f"{board.turn.capitalize()}'s turn. Enter start position (x y): ").split()))
+        start = tuple(input(f"{board.turn.capitalize()}'s turn. Enter start position (FileRank): ").upper())
+        start = ChessBoard.file_rank_to_coords(start[0], start[1])
         print(start)
-        end = tuple(map(int, input("Enter end position (x y): ").split()))
+        end = tuple(input("Enter the end position (FileRank): ").upper())
+        end = ChessBoard.file_rank_to_coords(end[0], end[1])
+        print(end)
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
