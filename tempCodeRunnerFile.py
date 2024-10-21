@@ -1,0 +1,1 @@
+str(space_count) if space_count > 0 else '

@@ -170,6 +170,34 @@ class ChessBoard:
 
         return new
 
+    def get_fen(self):
+        fen_str = ""
+        for rank in self.board:
+            space_count = 0
+            for file in rank:
+                if file != ' ' and space_count > 0:
+                    fen_str += str(space_count)
+                    space_count = 0
+                    
+                match file:
+                    case file if isinstance(file, Pawn):
+                        fen_str += "p" if file.color == BLACK else "P"
+                    case file if isinstance(file, Rook):
+                        fen_str += "r" if file.color == BLACK else "R"
+                    case file if isinstance(file, Knight):
+                        fen_str += "n" if file.color == BLACK else "N"
+                    case file if isinstance(file, Bishop):
+                        fen_str += "b" if file.color == BLACK else "B"
+                    case file if isinstance(file, King):
+                        fen_str += "k" if file.color == BLACK else "K"
+                    case file if isinstance(file, Queen):
+                        fen_str += "q" if file.color == BLACK else "Q"
+                    case ' ':
+                        space_count += 1
+
+            fen_str += (str(space_count) if space_count > 0 else '') + "/"
+        return fen_str[:-1]
+
     @staticmethod
     def file_rank_to_coords(file, rank):
         # File is the letter and rank is the number
@@ -494,6 +522,7 @@ def play_game():
 
     while True:
         board.print_board()
+        print(board.get_fen())
 
         # Player move (simple manual input for demonstration)
         start = tuple(input(f"{board.turn.capitalize()}'s turn. Enter start position (FileRank): ").upper())
@@ -503,7 +532,7 @@ def play_game():
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
-            transposition_dag.store_position(board.board)
+            # transposition_dag.store_position(board.board)
             game_tree.make_move(board.board, (start, end))
             # Switch turns
             board.turn = BLACK if board.turn == WHITE else WHITE
