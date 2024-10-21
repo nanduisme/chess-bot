@@ -134,6 +134,42 @@ class ChessBoard:
             BLACK: {'kingside': True, 'queenside': True}
         }
 
+    @classmethod
+    def from_fen(cls, fen_str):
+        new = cls()
+        new.board = [
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        ]
+        ranks = fen_str.split("/")
+        for i, rank in enumerate(ranks):
+            file = 0
+            for piece in rank:
+                match piece.lower():
+                    case 'p':
+                        new.board[i][file] = Pawn(WHITE if piece.isupper() else BLACK)
+                    case 'n':
+                        new.board[i][file] = Knight(WHITE if piece.isupper() else BLACK)
+                    case 'b':
+                        new.board[i][file] = Bishop(WHITE if piece.isupper() else BLACK)
+                    case 'r':
+                        new.board[i][file] = Rook(WHITE if piece.isupper() else BLACK)
+                    case 'q':
+                        new.board[i][file] = Queen(WHITE if piece.isupper() else BLACK)
+                    case 'k':
+                        new.board[i][file] = King(WHITE if piece.isupper() else BLACK)
+                    case n if n.isnumeric():
+                        file += int(n) - 1
+                file += 1
+
+        return new
+
     @staticmethod
     def file_rank_to_coords(file, rank):
         # File is the letter and rank is the number
