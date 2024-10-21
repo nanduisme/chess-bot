@@ -446,4 +446,5 @@ def play_game():
             print("Invalid move. Try again.")
 
 # Run the game
-play_game()
+if __name__ == "__main__":
+    play_game()
