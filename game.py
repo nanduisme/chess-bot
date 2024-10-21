@@ -139,7 +139,7 @@ class ChessBoard:
         # File is the letter and rank is the number
 
         # Returns (rank, file)
-        return (int(rank) - 1, ord(file) - ord("A"))
+        return (8 - int(rank), ord(file) - ord("A"))
 
     def initialize_board(self):
         return [
@@ -160,7 +160,7 @@ class ChessBoard:
 
         print("A  B  C  D  E  F  G  H\n")
         for i, row in enumerate(self.board):
-            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", i + 1)
+            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", 8 - i)
         print()
 
     def get_piece(self, pos):
@@ -462,10 +462,8 @@ def play_game():
         # Player move (simple manual input for demonstration)
         start = tuple(input(f"{board.turn.capitalize()}'s turn. Enter start position (FileRank): ").upper())
         start = ChessBoard.file_rank_to_coords(start[0], start[1])
-        print(start)
         end = tuple(input("Enter the end position (FileRank): ").upper())
         end = ChessBoard.file_rank_to_coords(end[0], end[1])
-        print(end)
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
