@@ -223,6 +223,12 @@ class TreeNode:
         # Return the parent node representing the previous game state
         return self.parent
 
+"""
+ChessGameTree allows for tracking the progression of a chess game, 
+maintaining a history of moves and board states in a tree structure. 
+This can be useful for features like undoing moves, analyzing game history, 
+or exploring different move sequences.
+"""
 class ChessGameTree:
     def __init__(self, initial_board):
          # Initialize the tree with the initial board state
@@ -242,28 +248,40 @@ class ChessGameTree:
         if self.current_node.get_parent():
             self.current_node = self.current_node.get_parent()
 
-# Graph for Move Validation
+"""
+Chess Graph for Move Validation
+This class represents a graph structure where each node is a square on the chessboard.
+Edges between nodes represent valid moves from one square to another.
+"""
 class ChessGraph:
     def __init__(self):
+         # Initialize the graph as an empty dictionary
         self.graph = {}
 
     def add_node(self, square):
+         # Add a node to the graph if it doesn't already exist
         if square not in self.graph:
             self.graph[square] = []
 
     def add_edge(self, from_square, to_square):
+         # Add an edge from one square to another, representing a valid move
         if from_square in self.graph:
             self.graph[from_square].append(to_square)
 
     def get_neighbors(self, square):
+        # Get all squares that can be reached from the given square
         return self.graph.get(square, [])
 
+"""
+ChessBoardGraph builds on ChessGraph by adding chess-specific methods for initializing the board and generating moves.
+"""
 class ChessBoardGraph:
     def __init__(self):
         self.graph = ChessGraph()
         self.initialize_graph()
 
     def initialize_graph(self):
+         # Initialize the graph with all squares on the chessboard
         for x in range(8):
             for y in range(8):
                 self.graph.add_node((x, y))  # Add each square
