@@ -1,117 +1,127 @@
 # Constants
-WHITE, BLACK = 'white', 'black'
+WHITE, BLACK = 'white', 'black'  # Defining constants for white and black pieces
 
 # Chess Pieces Classes
 class Piece:
     def __init__(self, color):
-        self.color = color
-        self.has_moved = False  # For castling
+        self.color = color  # Every piece has a color (white or black)
+        self.has_moved = False  # Tracks whether the piece has moved (important for castling)
 
     def valid_moves(self, pos):
-        pass  # To be implemented in subclasses
+        pass  # This is a placeholder method to be implemented by specific piece types
 
+# Class for Pawn Piece
 class Pawn(Piece):
     def valid_moves(self, board, pos, en_passant_target=None):
-        moves = []
-        x, y = pos
-        direction = -1 if self.color == WHITE else 1
+        moves = []  # List to store valid moves for the pawn
+        x, y = pos  # Current position of the pawn
+        direction = -1 if self.color == WHITE else 1  # Pawns move up (for white) or down (for black)
 
-        # Move forward
+        # Move forward by one square
         if 0 <= x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
-            moves.append((x + direction, y))
-            # Two-square move from start
+            moves.append((x + direction, y))  # Add the forward move
+            # Two-square move from starting position
             if not self.has_moved and 0 <= x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
-                moves.append((x + 2 * direction, y))
+                moves.append((x + 2 * direction, y))  # Add the two-square move
 
-        # Captures
-        for dy in [-1, 1]:
-            if 0 <= y + dy < 8:
-                target = board.get_piece((x + direction, y + dy))
-                if target != " " and target.color != self.color:
+        # Diagonal captures
+        for dy in [-1, 1]:  # Check both diagonal directions (left and right)
+            if 0 <= y + dy < 8:  # Ensure it's within board limits
+                target = board.get_piece((x + direction, y + dy))  # Get the piece diagonally
+                if target != " " and target.color != self.color:  # If there's an enemy piece, capture
                     moves.append((x + direction, y + dy))
                 # En Passant capture
-                if en_passant_target == (x + direction, y + dy):
+                if en_passant_target == (x + direction, y + dy):  # Special rule: capture via en passant
                     moves.append((x + direction, y + dy))
 
-        return moves
+        return moves  # Return the list of valid moves
 
+# Class for Rook Piece
 class Rook(Piece):
     def valid_moves(self, board, pos, en_passant_target=None):
-        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-        return self._generate_sliding_moves(board, pos, directions)
+        directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # Rook can move in four directions (up, down, left, right)
+        return self._generate_sliding_moves(board, pos, directions)  # Generate all valid moves for rook
 
+    # Helper method for sliding pieces (rook and bishop)
     def _generate_sliding_moves(self, board, pos, directions):
-        moves = []
-        x, y = pos
-        for dx, dy in directions:
-            nx, ny = x + dx, y + dy
-            while 0 <= nx < 8 and 0 <= ny < 8:
-                if 0 <= nx < 8 and 0 <= ny < 8:
-                    target = board.get_piece((nx, ny))
-                    if target == ' ':
-                        moves.append((nx, ny))
-                    elif target.color != self.color:
-                        moves.append((nx, ny))
-                        break
-                    else:
-                        break
-                nx, ny = nx + dx, ny + dy
-        return moves
-
-class Knight(Piece):
-    def valid_moves(self, board, pos, en_passant_target=None):
-        directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]
-        x, y = pos
-        valid_moves = []
-        for dx, dy in directions:
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < 8 and 0 <= ny < 8:
-                target = board.get_piece((nx, ny))
-                if target == " " or target.color != self.color:
-                    valid_moves.append((nx, ny))
-        return valid_moves
-
-class Bishop(Piece):
-    def valid_moves(self, board, pos, en_passant_target=None):
-        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]
-        return self._generate_sliding_moves(board, pos, directions)
-
-    def _generate_sliding_moves(self, board, pos, directions):
-        moves = []
-        x, y = pos
-        for dx, dy in directions:
-            nx, ny = x + dx, y + dy
-            while 0 <= nx < 8 and 0 <= ny < 8:
-                target = board.get_piece((nx, ny))
-                if target == ' ':
+        moves = []  # List to store valid moves
+        x, y = pos  # Current position of the rook
+        for dx, dy in directions:  # Iterate over each direction
+            nx, ny = x + dx, y + dy  # Move in the direction
+            while 0 <= nx < 8 and 0 <= ny < 8:  # While the new position is within the board
+                target = board.get_piece((nx, ny))  # Get the piece at the new position
+                if target == ' ':  # If the square is empty, add it as a valid move
                     moves.append((nx, ny))
-                elif target.color != self.color:
+                elif target.color != self.color:  # If it's an opponent's piece, capture and stop moving further
                     moves.append((nx, ny))
                     break
                 else:
-                    break
-                nx, ny = nx + dx, ny + dy
-        return moves
+                    break  # Stop moving if it's our own piece
+                nx, ny = nx + dx, ny + dy  # Move further in the same direction
+        return moves  # Return the list of valid moves
 
+# Class for Knight Piece
+class Knight(Piece):
+    def valid_moves(self, board, pos, en_passant_target=None):
+
+        directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]  # Knight's L-shaped moves
+        x, y = pos  # Current position of the knight
+        valid_moves = []  # List to store valid moves
+        for dx, dy in directions:  # Iterate over each possible L-shaped move
+            nx, ny = x + dx, y + dy  # Calculate the new position
+            if 0 <= nx < 8 and 0 <= ny < 8:  # Ensure the new position is within the board
+                target = board.get_piece((nx, ny))  # Get the piece at the new position
+                if target == " " or target.color != self.color:  # Move if it's empty or an opponent's piece
+
+                    valid_moves.append((nx, ny))
+        return valid_moves  # Return the list of valid moves
+
+# Class for Bishop Piece
+class Bishop(Piece):
+    def valid_moves(self, board, pos, en_passant_target=None):
+        directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]  # Bishop moves diagonally in four directions
+        return self._generate_sliding_moves(board, pos, directions)  # Generate all valid moves for bishop
+
+    # Helper method for sliding pieces (same as in Rook)
+    def _generate_sliding_moves(self, board, pos, directions):
+        moves = []  # List to store valid moves
+        x, y = pos  # Current position of the bishop
+        for dx, dy in directions:  # Iterate over each diagonal direction
+            nx, ny = x + dx, y + dy  # Move in the direction
+            while 0 <= nx < 8 and 0 <= ny < 8:  # While the new position is within the board
+                target = board.get_piece((nx, ny))  # Get the piece at the new position
+                if target == ' ':  # If the square is empty, add it as a valid move
+                    moves.append((nx, ny))
+                elif target.color != self.color:  # If it's an opponent's piece, capture and stop moving further
+                    moves.append((nx, ny))
+                    break
+                else:
+                    break  # Stop moving if it's our own piece
+                nx, ny = nx + dx, ny + dy  # Move further in the same direction
+        return moves  # Return the list of valid moves
+
+# Class for Queen Piece
 class Queen(Piece):
     def valid_moves(self, board, pos, en_passant_target=None):
+        # Combine Rook and Bishop movement logic since Queen moves like both
         return Rook(self.color).valid_moves(board, pos) + Bishop(self.color).valid_moves(board, pos)
 
+# Class for King Piece
 class King(Piece):
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [
-            (1, 0), (-1, 0), (0, 1), (0, -1),  # Horizontal and vertical moves
-            (1, 1), (1, -1), (-1, 1), (-1, -1)  # Diagonal moves
+            (1, 0), (-1, 0), (0, 1), (0, -1),  # King's movement: one square in any horizontal or vertical direction
+            (1, 1), (1, -1), (-1, 1), (-1, -1)  # Also one square diagonally
         ]
-        moves = []
-        x, y = pos
-        for dx, dy in directions:
-            nx, ny = x + dx, y + dy
-            if 0 <= nx < 8 and 0 <= ny < 8:
-                target = board.get_piece((nx, ny))
-                if target == ' ' or target.color != self.color:
+        moves = []  # List to store valid moves
+        x, y = pos  # Current position of the king
+        for dx, dy in directions:  # Iterate over each direction
+            nx, ny = x + dx, y + dy  # Calculate the new position
+            if 0 <= nx < 8 and 0 <= ny < 8:  # Ensure the new position is within the board
+                target = board.get_piece((nx, ny))  # Get the piece at the new position
+                if target == ' ' or target.color != self.color:  # Move if it's empty or an opponent's piece
                     moves.append((nx, ny))
-        return moves
+        return moves  # Return the list of valid moves
 
 # Chess Board Setup
 class ChessBoard:
@@ -305,112 +315,138 @@ class ChessBoardGraph:
             return True
         return False
 
-# Heap for Move Prioritization
+# Custom heap implementation to prioritize chess moves based on their evaluation
 class CustomHeap:
     def __init__(self):
-        self.heap = []
+        self.heap = []  # Initialize an empty list to represent the heap
 
+    # Method to insert a move with its priority into the heap
     def insert(self, priority, move):
-        self.heap.append((priority, move))
-        self._heapify_up(len(self.heap) - 1)
+        self.heap.append((priority, move))  # Add the move and its priority as a tuple
+        self._heapify_up(len(self.heap) - 1)  # Ensure heap property by adjusting upwards
 
+    # Internal method to maintain heap property by "bubbling up" the inserted element
     def _heapify_up(self, index):
-        while index > 0:
-            parent = (index - 1) // 2
-            if self.heap[index][0] > self.heap[parent][0]:
+        while index > 0:  # While the element is not at the root
+            parent = (index - 1) // 2  # Get the parent index
+            if self.heap[index][0] > self.heap[parent][0]:  # Compare priorities (max heap)
+                # Swap with the parent if the current element has a higher priority
                 self.heap[index], self.heap[parent] = self.heap[parent], self.heap[index]
-                index = parent
+                index = parent  # Move the index to the parent and repeat
             else:
-                break
+                break  # Stop if the heap property is satisfied
 
+    # Method to extract the highest priority move (the root of the heap)
     def extract_max(self):
-        if len(self.heap) > 1:
-            self._swap(0, len(self.heap) - 1)
-            max_value = self.heap.pop()
-            self._heapify_down(0)
-        elif len(self.heap) == 1:
-            max_value = self.heap.pop()
+        if len(self.heap) > 1:  # If there are multiple elements in the heap
+            self._swap(0, len(self.heap) - 1)  # Swap the root with the last element
+            max_value = self.heap.pop()  # Remove and store the last element (which was the root)
+            self._heapify_down(0)  # Restore the heap property by adjusting downwards
+        elif len(self.heap) == 1:  # If there's only one element
+            max_value = self.heap.pop()  # Just pop the only element
         else:
-            return None
-        return max_value[1]
+            return None  # Return None if the heap is empty
+        return max_value[1]  # Return the move (ignoring the priority)
 
+    # Internal method to maintain heap property by "bubbling down" the root element
     def _heapify_down(self, index):
-        last_index = len(self.heap) - 1
-        while index <= last_index:
-            left_child = 2 * index + 1
-            right_child = 2 * index + 2
-            largest = index
+        last_index = len(self.heap) - 1  # Get the index of the last element
+        while index <= last_index:  # While we haven't reached the end of the heap
+            left_child = 2 * index + 1  # Left child index
+            right_child = 2 * index + 2  # Right child index
+            largest = index  # Assume the current element is the largest
 
+            # Compare with the left child
             if left_child <= last_index and self.heap[left_child][0] > self.heap[largest][0]:
-                largest = left_child
-            if right_child <= last_index and self.heap[right_child][0] > self.heap[largest][0]:
-                largest = right_child
+                largest = left_child  # Update largest if the left child has a higher priority
 
+            # Compare with the right child
+            if right_child <= last_index and self.heap[right_child][0] > self.heap[largest][0]:
+                largest = right_child  # Update largest if the right child has a higher priority
+
+            # If the largest is not the current element, swap and continue bubbling down
             if largest != index:
                 self._swap(index, largest)
                 index = largest
             else:
-                break
+                break  # Stop if the heap property is satisfied
 
+    # Helper method to swap two elements in the heap
     def _swap(self, i, j):
-        self.heap[i], self.heap[j] = self.heap[j], self.heap[i]
+        self.heap[i], self.heap[j] = self.heap[j], self.heap[i]  # Swap elements at indices i and j
 
+# Wrapper class to manage chess moves using the heap
 class ChessMoveHeap:
-    def __init__(self):
-        self.move_heap = CustomHeap()
+    def _init_(self):
+        self.move_heap = CustomHeap()  # Create an instance of the custom heap to store moves
 
+    # Method to add a move with its priority to the heap
     def add_move(self, move, priority):
-        self.move_heap.insert(priority, move)
+        self.move_heap.insert(priority, move)  # Insert the move and its priority into the heap
 
+    # Method to get the move with the highest priority
     def get_best_move(self):
-        return self.move_heap.extract_max()
+        return self.move_heap.extract_max()  # Extract and return the highest priority move
 
+    # Method to generate priority moves from a list of moves
     def generate_priority_moves(self, moves):
-        for move in moves:
-            priority = self.evaluate_move(move)
-            self.add_move(move, priority)
+        for move in moves:  # Iterate through each move
+            priority = self.evaluate_move(move)  # Evaluate the priority of the move
+            self.add_move(move, priority)  # Add the move to the heap with its evaluated priority
 
+    # Placeholder method for evaluating a move's priority (to be implemented)
     def evaluate_move(self):
-        return 1  # Placeholder: actual evaluation logic
+        return 1  # Placeholder: actual move evaluation logic should be implemented here
 
 # Directed Acyclic Graph (DAG) for Transposition Table (Move History Tracking)
+
+# Class representing a Directed Acyclic Graph (DAG) where each node is a board state
 class ChessDAG:
-    def __init__(self):
-        self.nodes = {}
+    def _init_(self):
+        self.nodes = {}  # Initialize an empty dictionary to store nodes (board positions)
 
+    # Method to add a node (board state) to the DAG
     def add_node(self, board_hash):
-        if board_hash not in self.nodes:
-            self.nodes[board_hash] = []
+        if board_hash not in self.nodes:  # Check if the board position (hash) is already in the graph
+            self.nodes[board_hash] = []  # If not, create an empty list of transitions for this node
 
+    # Method to add an edge between two nodes (representing a transition between board states)
     def add_edge(self, from_board, to_board):
-        if from_board in self.nodes:
-            self.nodes[from_board].append(to_board)
+        if from_board in self.nodes:  # Check if the starting board state exists in the graph
+            self.nodes[from_board].append(to_board)  # Add the transition to the list of edges (moves)
 
+    # Method to check if a board state has been seen before (exists in the DAG)
     def has_seen(self, board_hash):
-        return board_hash in self.nodes
+        return board_hash in self.nodes  # Return True if the board state is already in the graph
 
+    # Method to retrieve transitions (next possible moves) from a given board state
     def get_transitions(self, board_hash):
-        return self.nodes.get(board_hash, [])
+        return self.nodes.get(board_hash, [])  # Return the list of transitions or an empty list if none exist
 
+# Wrapper class to manage transposition tables using a DAG (tracking repeated board states)
 class ChessTranspositionDAG:
-    def __init__(self):
-        self.dag = ChessDAG()
+    def _init_(self):
+        self.dag = ChessDAG()  # Initialize an instance of the DAG for move history tracking
 
+    # Method to hash the board state (to use as a unique identifier in the DAG)
     def hash_board(self, board):
-        return hash(str(board))  # Simple board hashing based on its string representation
+        return hash(str(board))  # Convert the board to a string and hash it to get a unique identifier
 
+    # Method to store the current board position in the DAG
     def store_position(self, board):
-        board_hash = self.hash_board(board)
-        self.dag.add_node(board_hash)
+        board_hash = self.hash_board(board)  # Hash the board state to get its unique identifier
+        self.dag.add_node(board_hash)  # Add the board state as a node in the DAG
 
+    # Method to check if a board position has occurred before (for repetition detection)
     def check_repetition(self, board):
-        board_hash = self.hash_board(board)
-        return self.dag.has_seen(board_hash)
+        board_hash = self.hash_board(board)  # Hash the board state
+        return self.dag.has_seen(board_hash)  # Check if the hashed board state exists in the DAG
 
+    # Method to add a transition (move) from one board position to another
     def add_transition(self, from_board, to_board):
-        from_hash = self.hash_board(from_board)
-        to_hash = self.hash_board(to_board)
-        self.dag.add_edge(from_hash, to_hash)
+        from_hash = self.hash_board(from_board)  # Hash the starting board state
+        to_hash = self.hash_board(to_board)  # Hash the resulting board state
+        self.dag.add_edge(from_hash, to_hash)  # Add an edge between the two board states in the DAG
 
 # Game Loop without AI
 def play_game():
