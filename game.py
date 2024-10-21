@@ -159,7 +159,6 @@ class ChessBoard:
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
-        print(f"Trying to move piece at {start} to {end}")
         if not piece:
             print("No piece at start position.")
             return False
@@ -167,7 +166,6 @@ class ChessBoard:
             print("Piece belongs to the opponent.")
             return False
         valid_moves = piece.valid_moves(self, start, self.en_passant_target)
-        print(f"Valid moves for piece at {start}: {valid_moves}")
         if end not in valid_moves:
             print("End position is not a valid move.")
             return False
@@ -214,22 +212,30 @@ class TreeNode:
         self.parent = parent  # Previous state for backtracking
 
     def add_child(self, child_node):
+        # Add a child node representing a subsequent game state
         self.children.append(child_node)
 
     def get_children(self):
+         # Return the list of child nodes
         return self.children
 
     def get_parent(self):
+        # Return the parent node representing the previous game state
         return self.parent
 
 class ChessGameTree:
     def __init__(self, initial_board):
+         # Initialize the tree with the initial board state
         self.root = TreeNode(initial_board)  # Initial game state
+         # Set the current node to the root node
         self.current_node = self.root
 
     def make_move(self, new_board_state, move):
+         # Create a new node for the new board state and move
         new_node = TreeNode(new_board_state, move, self.current_node)
+         # Add the new node as a child of the current node
         self.current_node.add_child(new_node)
+         # Update the current node to the new node
         self.current_node = new_node
 
     def undo_move(self):
