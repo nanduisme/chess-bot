@@ -522,7 +522,6 @@ def play_game():
 
     while True:
         board.print_board()
-        print(board.get_fen())
 
         # Player move (simple manual input for demonstration)
         start = tuple(input(f"{board.turn.capitalize()}'s turn. Enter start position (FileRank): ").upper())
