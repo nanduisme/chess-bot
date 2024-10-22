@@ -270,7 +270,7 @@ class ChessBoard:
                         return True
         return False
 
-    def check_checkmate(self):
+    def is_checkmate(self):
         for x in range(8):
             for y in range(8):
                 piece = self.get_piece((x, y))
@@ -537,7 +537,7 @@ def play_game():
             board.turn = BLACK if board.turn == WHITE else WHITE
             
             # Check for checkmate
-            if board.check_checkmate():
+            if board.is_checkmate():
                 print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
                 break
         else:
