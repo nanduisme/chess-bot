@@ -121,7 +121,44 @@ class King(Piece):
                 target = board.get_piece((nx, ny))  # Get the piece at the new position
                 if target == ' ' or target.color != self.color:  # Move if it's empty or an opponent's piece
                     moves.append((nx, ny))
+        
+        if not self.has_moved:
+            # Castling moves
+            if board.castling_rights[self.color]['kingside']:
+                if self._can_castle_kingside(board, pos):
+                    moves.append((x, y + 2))
+            if board.castling_rights[self.color]['queenside']:
+                if self._can_castle_queenside(board, pos):
+                    moves.append((x, y - 2))
+                    
         return moves  # Return the list of valid moves
+
+    def _can_castle_kingside(self, board, pos):
+        x, y = pos
+        # Ensure the squares between king and rook are empty and not under attack
+        return (
+            board.get_piece((x, y + 1)) == ' ' and
+            board.get_piece((x, y + 2)) == ' ' and
+            not board.is_in_check(self.color) and
+            not board.is_under_attack((x, y + 1), self.color) and
+            not board.is_under_attack((x, y + 2), self.color) and
+            isinstance(board.get_piece((x, 7)), Rook) and
+            not board.get_piece((x, 7)).has_moved
+        )
+
+    def _can_castle_queenside(self, board, pos):
+        x, y = pos
+        # Ensure the squares between king and rook are empty and not under attack
+        return (
+            board.get_piece((x, y - 1)) == ' ' and
+            board.get_piece((x, y - 2)) == ' ' and
+            board.get_piece((x, y - 3)) == ' ' and
+            not board.is_in_check(self.color) and
+            not board.is_under_attack((x, y - 1), self.color) and
+            not board.is_under_attack((x, y - 2), self.color) and
+            isinstance(board.get_piece((x, 0)), Rook) and
+            not board.get_piece((x, 0)).has_moved
+        )
 
 # Chess Board Setup
 class ChessBoard:
@@ -237,12 +274,23 @@ class ChessBoard:
         return piece if piece != ' ' else " "
 
     def move_piece(self, start, end):
+        """Move the piece and handle special cases like castling."""
         sx, sy = start
         ex, ey = end
-        self.board[ex][ey] = self.board[sx][sy]
+        piece = self.get_piece(start)
+        
+        # Castling move
+        if isinstance(piece, King) and abs(ey - sy) == 2:
+            if ey > sy:  # Kingside castling
+                self.board[sx][sy + 1] = self.board[sx][7]  # Move the rook
+                self.board[sx][7] = ' '
+            else:  # Queenside castling
+                self.board[sx][sy - 1] = self.board[sx][0]  # Move the rook
+                self.board[sx][0] = ' '
+
+        self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
-        piece = self.get_piece(end)
-        piece.has_moved = True  # Track if the piece has moved
+        piece.has_moved = True
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
@@ -288,6 +336,25 @@ class ChessBoard:
                             return False
                         self.move_piece(end, start)  # Undo move
         return True
+    
+    def is_under_attack(self, pos, color):
+        """Check if a square is under attack by any opponent's piece."""
+        for x in range(8):
+            for y in range(8):
+                piece = self.get_piece((x, y))
+                if piece != ' ' and piece.color != color:
+                    if pos in piece.valid_moves(self, (x, y)):
+                        return True
+        return False
+    
+    def find_king(self, color):
+        """Find the position of the king of the given color."""
+        for x in range(8):
+            for y in range(8):
+                piece = self.get_piece((x, y))
+                if isinstance(piece, King) and piece.color == color:
+                    return (x, y)
+        return None
 
 
 
