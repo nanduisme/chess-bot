@@ -121,18 +121,56 @@ class King(Piece):
                 target = board.get_piece((nx, ny))  # Get the piece at the new position
                 if target == ' ' or target.color != self.color:  # Move if it's empty or an opponent's piece
                     moves.append((nx, ny))
+        
+        if not self.has_moved:
+            # Castling moves
+            if board.castling_rights[self.color]['kingside']:
+                if self._can_castle_kingside(board, pos):
+                    moves.append((x, y + 2))
+            if board.castling_rights[self.color]['queenside']:
+                if self._can_castle_queenside(board, pos):
+                    moves.append((x, y - 2))
+                    
         return moves  # Return the list of valid moves
+
+    def _can_castle_kingside(self, board, pos):
+        x, y = pos
+        # Ensure the squares between king and rook are empty and not under attack
+        return (
+            board.get_piece((x, y + 1)) == ' ' and
+            board.get_piece((x, y + 2)) == ' ' and
+            not board.is_in_check(self.color) and
+            not board.is_under_attack((x, y + 1), self.color) and
+            not board.is_under_attack((x, y + 2), self.color) and
+            isinstance(board.get_piece((x, 7)), Rook) and
+            not board.get_piece((x, 7)).has_moved
+        )
+
+    def _can_castle_queenside(self, board, pos):
+        x, y = pos
+        # Ensure the squares between king and rook are empty and not under attack
+        return (
+            board.get_piece((x, y - 1)) == ' ' and
+            board.get_piece((x, y - 2)) == ' ' and
+            board.get_piece((x, y - 3)) == ' ' and
+            not board.is_in_check(self.color) and
+            not board.is_under_attack((x, y - 1), self.color) and
+            not board.is_under_attack((x, y - 2), self.color) and
+            isinstance(board.get_piece((x, 0)), Rook) and
+            not board.get_piece((x, 0)).has_moved
+        )
 
 # Chess Board Setup
 class ChessBoard:
     def __init__(self):
         self.board = self.initialize_board()
-        self.turn = WHITE
-        self.en_passant_target = None
+        self.turn = WHITE #game starts with the player controlling the white pieces
+        self.en_passant_target = None #track the target square for an en passant capture
         self.castling_rights = {
             WHITE: {'kingside': True, 'queenside': True},
             BLACK: {'kingside': True, 'queenside': True}
-        }
+        } #Both players start with the ability to castle on both the kingside and queenside.
+
 
     @classmethod
     def from_fen(cls, fen_str):
@@ -205,6 +243,7 @@ class ChessBoard:
         # Returns (rank, file)
         return (8 - int(rank), ord(file) - ord("A"))
 
+    #creates the starting layout of the chessboard.Each list contains the pieces in their starting positions, with the black pieces at the top and white pieces at the bottom. Empty squares are represented by spaces 
     def initialize_board(self):
         return [
             [Rook(BLACK), Knight(BLACK), Bishop(BLACK), Queen(BLACK), King(BLACK), Bishop(BLACK), Knight(BLACK), Rook(BLACK)],
@@ -215,30 +254,43 @@ class ChessBoard:
             [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
             [Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE), Pawn(WHITE)],
             [Rook(WHITE), Knight(WHITE), Bishop(WHITE), Queen(WHITE), King(WHITE), Bishop(WHITE), Knight(WHITE), Rook(WHITE)]
-        ]
+        ] 
 
     def print_board(self):
         piece_symbols = {
             Rook: 'R', Knight: 'N', Bishop: 'B', Queen: 'Q', King: 'K', Pawn: 'P'
-        }
+        } # maps chess piece classes to their standard chess symbols.
+
 
         print("A  B  C  D  E  F  G  H\n")
         for i, row in enumerate(self.board):
             print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", 8 - i)
         print()
 
+    # takes a position as input and returns the piece located at that position on the board.
     def get_piece(self, pos):
         x, y = pos
         piece = self.board[x][y]
         return piece if piece != ' ' else " "
 
     def move_piece(self, start, end):
+        """Move the piece and handle special cases like castling."""
         sx, sy = start
         ex, ey = end
-        self.board[ex][ey] = self.board[sx][sy]
+        piece = self.get_piece(start)
+        
+        # Castling move
+        if isinstance(piece, King) and abs(ey - sy) == 2:
+            if ey > sy:  # Kingside castling
+                self.board[sx][sy + 1] = self.board[sx][7]  # Move the rook
+                self.board[sx][7] = ' '
+            else:  # Queenside castling
+                self.board[sx][sy - 1] = self.board[sx][0]  # Move the rook
+                self.board[sx][0] = ' '
+
+        self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
-        piece = self.get_piece(end)
-        piece.has_moved = True  # Track if the piece has moved
+        piece.has_moved = True
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
@@ -284,241 +336,32 @@ class ChessBoard:
                             return False
                         self.move_piece(end, start)  # Undo move
         return True
-
-
-# Tree for Move History
-class TreeNode:
-    def __init__(self, board_state, move=None, parent=None):
-        self.board_state = board_state  # Current state of the board
-        self.move = move  # Move that led to this state
-        self.children = []  # Subsequent game states (valid moves)
-        self.parent = parent  # Previous state for backtracking
-
-    def add_child(self, child_node):
-        # Add a child node representing a subsequent game state
-        self.children.append(child_node)
-
-    def get_children(self):
-         # Return the list of child nodes
-        return self.children
-
-    def get_parent(self):
-        # Return the parent node representing the previous game state
-        return self.parent
-
-"""
-ChessGameTree allows for tracking the progression of a chess game, 
-maintaining a history of moves and board states in a tree structure. 
-This can be useful for features like undoing moves, analyzing game history, 
-or exploring different move sequences.
-"""
-class ChessGameTree:
-    def __init__(self, initial_board):
-         # Initialize the tree with the initial board state
-        self.root = TreeNode(initial_board)  # Initial game state
-         # Set the current node to the root node
-        self.current_node = self.root
-
-    def make_move(self, new_board_state, move):
-         # Create a new node for the new board state and move
-        new_node = TreeNode(new_board_state, move, self.current_node)
-         # Add the new node as a child of the current node
-        self.current_node.add_child(new_node)
-         # Update the current node to the new node
-        self.current_node = new_node
-
-    def undo_move(self):
-        if self.current_node.get_parent():
-            self.current_node = self.current_node.get_parent()
-
-"""
-Chess Graph for Move Validation
-This class represents a graph structure where each node is a square on the chessboard.
-Edges between nodes represent valid moves from one square to another.
-"""
-class ChessGraph:
-    def __init__(self):
-         # Initialize the graph as an empty dictionary
-        self.graph = {}
-
-    def add_node(self, square):
-         # Add a node to the graph if it doesn't already exist
-        if square not in self.graph:
-            self.graph[square] = []
-
-    def add_edge(self, from_square, to_square):
-         # Add an edge from one square to another, representing a valid move
-        if from_square in self.graph:
-            self.graph[from_square].append(to_square)
-
-    def get_neighbors(self, square):
-        # Get all squares that can be reached from the given square
-        return self.graph.get(square, [])
-
-"""
-ChessBoardGraph builds on ChessGraph by adding chess-specific methods for initializing the board and generating moves.
-"""
-class ChessBoardGraph:
-    def __init__(self):
-        self.graph = ChessGraph()
-        self.initialize_graph()
-
-    def initialize_graph(self):
-         # Initialize the graph with all squares on the chessboard
+    
+    def is_under_attack(self, pos, color):
+        """Check if a square is under attack by any opponent's piece."""
         for x in range(8):
             for y in range(8):
-                self.graph.add_node((x, y))  # Add each square
-
-    def generate_moves(self, pos):
-        # Generate valid moves from the graph
-        return self.graph.get_neighbors(pos)
-
-    def move_piece(self, start, end):
-        # Ensure there is an edge (valid move) between start and end
-        if end in self.graph.get_neighbors(start):
-            return True
+                piece = self.get_piece((x, y))
+                if piece != ' ' and piece.color != color:
+                    if pos in piece.valid_moves(self, (x, y)):
+                        return True
         return False
+    
+    def find_king(self, color):
+        """Find the position of the king of the given color."""
+        for x in range(8):
+            for y in range(8):
+                piece = self.get_piece((x, y))
+                if isinstance(piece, King) and piece.color == color:
+                    return (x, y)
+        return None
 
-# Custom heap implementation to prioritize chess moves based on their evaluation
-class CustomHeap:
-    def __init__(self):
-        self.heap = []  # Initialize an empty list to represent the heap
 
-    # Method to insert a move with its priority into the heap
-    def insert(self, priority, move):
-        self.heap.append((priority, move))  # Add the move and its priority as a tuple
-        self._heapify_up(len(self.heap) - 1)  # Ensure heap property by adjusting upwards
 
-    # Internal method to maintain heap property by "bubbling up" the inserted element
-    def _heapify_up(self, index):
-        while index > 0:  # While the element is not at the root
-            parent = (index - 1) // 2  # Get the parent index
-            if self.heap[index][0] > self.heap[parent][0]:  # Compare priorities (max heap)
-                # Swap with the parent if the current element has a higher priority
-                self.heap[index], self.heap[parent] = self.heap[parent], self.heap[index]
-                index = parent  # Move the index to the parent and repeat
-            else:
-                break  # Stop if the heap property is satisfied
-
-    # Method to extract the highest priority move (the root of the heap)
-    def extract_max(self):
-        if len(self.heap) > 1:  # If there are multiple elements in the heap
-            self._swap(0, len(self.heap) - 1)  # Swap the root with the last element
-            max_value = self.heap.pop()  # Remove and store the last element (which was the root)
-            self._heapify_down(0)  # Restore the heap property by adjusting downwards
-        elif len(self.heap) == 1:  # If there's only one element
-            max_value = self.heap.pop()  # Just pop the only element
-        else:
-            return None  # Return None if the heap is empty
-        return max_value[1]  # Return the move (ignoring the priority)
-
-    # Internal method to maintain heap property by "bubbling down" the root element
-    def _heapify_down(self, index):
-        last_index = len(self.heap) - 1  # Get the index of the last element
-        while index <= last_index:  # While we haven't reached the end of the heap
-            left_child = 2 * index + 1  # Left child index
-            right_child = 2 * index + 2  # Right child index
-            largest = index  # Assume the current element is the largest
-
-            # Compare with the left child
-            if left_child <= last_index and self.heap[left_child][0] > self.heap[largest][0]:
-                largest = left_child  # Update largest if the left child has a higher priority
-
-            # Compare with the right child
-            if right_child <= last_index and self.heap[right_child][0] > self.heap[largest][0]:
-                largest = right_child  # Update largest if the right child has a higher priority
-
-            # If the largest is not the current element, swap and continue bubbling down
-            if largest != index:
-                self._swap(index, largest)
-                index = largest
-            else:
-                break  # Stop if the heap property is satisfied
-
-    # Helper method to swap two elements in the heap
-    def _swap(self, i, j):
-        self.heap[i], self.heap[j] = self.heap[j], self.heap[i]  # Swap elements at indices i and j
-
-# Wrapper class to manage chess moves using the heap
-class ChessMoveHeap:
-    def _init_(self):
-        self.move_heap = CustomHeap()  # Create an instance of the custom heap to store moves
-
-    # Method to add a move with its priority to the heap
-    def add_move(self, move, priority):
-        self.move_heap.insert(priority, move)  # Insert the move and its priority into the heap
-
-    # Method to get the move with the highest priority
-    def get_best_move(self):
-        return self.move_heap.extract_max()  # Extract and return the highest priority move
-
-    # Method to generate priority moves from a list of moves
-    def generate_priority_moves(self, moves):
-        for move in moves:  # Iterate through each move
-            priority = self.evaluate_move(move)  # Evaluate the priority of the move
-            self.add_move(move, priority)  # Add the move to the heap with its evaluated priority
-
-    # Placeholder method for evaluating a move's priority (to be implemented)
-    def evaluate_move(self):
-        return 1  # Placeholder: actual move evaluation logic should be implemented here
-
-# Directed Acyclic Graph (DAG) for Transposition Table (Move History Tracking)
-
-# Class representing a Directed Acyclic Graph (DAG) where each node is a board state
-class ChessDAG:
-    def _init_(self):
-        self.nodes = {}  # Initialize an empty dictionary to store nodes (board positions)
-
-    # Method to add a node (board state) to the DAG
-    def add_node(self, board_hash):
-        if board_hash not in self.nodes:  # Check if the board position (hash) is already in the graph
-            self.nodes[board_hash] = []  # If not, create an empty list of transitions for this node
-
-    # Method to add an edge between two nodes (representing a transition between board states)
-    def add_edge(self, from_board, to_board):
-        if from_board in self.nodes:  # Check if the starting board state exists in the graph
-            self.nodes[from_board].append(to_board)  # Add the transition to the list of edges (moves)
-
-    # Method to check if a board state has been seen before (exists in the DAG)
-    def has_seen(self, board_hash):
-        return board_hash in self.nodes  # Return True if the board state is already in the graph
-
-    # Method to retrieve transitions (next possible moves) from a given board state
-    def get_transitions(self, board_hash):
-        return self.nodes.get(board_hash, [])  # Return the list of transitions or an empty list if none exist
-
-# Wrapper class to manage transposition tables using a DAG (tracking repeated board states)
-class ChessTranspositionDAG:
-    def _init_(self):
-        self.dag = ChessDAG()  # Initialize an instance of the DAG for move history tracking
-
-    # Method to hash the board state (to use as a unique identifier in the DAG)
-    def hash_board(self, board):
-        return hash(str(board))  # Convert the board to a string and hash it to get a unique identifier
-
-    # Method to store the current board position in the DAG
-    def store_position(self, board):
-        board_hash = self.hash_board(board)  # Hash the board state to get its unique identifier
-        self.dag.add_node(board_hash)  # Add the board state as a node in the DAG
-
-    # Method to check if a board position has occurred before (for repetition detection)
-    def check_repetition(self, board):
-        board_hash = self.hash_board(board)  # Hash the board state
-        return self.dag.has_seen(board_hash)  # Check if the hashed board state exists in the DAG
-
-    # Method to add a transition (move) from one board position to another
-    def add_transition(self, from_board, to_board):
-        from_hash = self.hash_board(from_board)  # Hash the starting board state
-        to_hash = self.hash_board(to_board)  # Hash the resulting board state
-        self.dag.add_edge(from_hash, to_hash)  # Add an edge between the two board states in the DAG
 
 # Game Loop without AI
 def play_game():
     board = ChessBoard()
-    game_tree = ChessGameTree(initial_board=board.board)
-    transposition_dag = ChessTranspositionDAG()
-    # board_graph = ChessBoardGraph()
-    # move_heap = ChessMoveHeap()
 
     while True:
         board.print_board()
@@ -531,8 +374,7 @@ def play_game():
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
-            # transposition_dag.store_position(board.board)
-            game_tree.make_move(board.board, (start, end))
+
             # Switch turns
             board.turn = BLACK if board.turn == WHITE else WHITE
             
