@@ -135,12 +135,76 @@ class ChessBoard:
         } #Both players start with the ability to castle on both the kingside and queenside.
 
 
+    @classmethod
+    def from_fen(cls, fen_str):
+        new = cls()
+        new.board = [
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+            [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '],
+        ]
+        ranks = fen_str.split("/")
+        for i, rank in enumerate(ranks):
+            file = 0
+            for piece in rank:
+                match piece.lower():
+                    case 'p':
+                        new.board[i][file] = Pawn(WHITE if piece.isupper() else BLACK)
+                    case 'n':
+                        new.board[i][file] = Knight(WHITE if piece.isupper() else BLACK)
+                    case 'b':
+                        new.board[i][file] = Bishop(WHITE if piece.isupper() else BLACK)
+                    case 'r':
+                        new.board[i][file] = Rook(WHITE if piece.isupper() else BLACK)
+                    case 'q':
+                        new.board[i][file] = Queen(WHITE if piece.isupper() else BLACK)
+                    case 'k':
+                        new.board[i][file] = King(WHITE if piece.isupper() else BLACK)
+                    case n if n.isnumeric():
+                        file += int(n) - 1
+                file += 1
+
+        return new
+
+    def get_fen(self):
+        fen_str = ""
+        for rank in self.board:
+            space_count = 0
+            for file in rank:
+                if file != ' ' and space_count > 0:
+                    fen_str += str(space_count)
+                    space_count = 0
+                    
+                match file:
+                    case file if isinstance(file, Pawn):
+                        fen_str += "p" if file.color == BLACK else "P"
+                    case file if isinstance(file, Rook):
+                        fen_str += "r" if file.color == BLACK else "R"
+                    case file if isinstance(file, Knight):
+                        fen_str += "n" if file.color == BLACK else "N"
+                    case file if isinstance(file, Bishop):
+                        fen_str += "b" if file.color == BLACK else "B"
+                    case file if isinstance(file, King):
+                        fen_str += "k" if file.color == BLACK else "K"
+                    case file if isinstance(file, Queen):
+                        fen_str += "q" if file.color == BLACK else "Q"
+                    case ' ':
+                        space_count += 1
+
+            fen_str += (str(space_count) if space_count > 0 else '') + "/"
+        return fen_str[:-1]
+
     @staticmethod
     def file_rank_to_coords(file, rank):
         # File is the letter and rank is the number
 
         # Returns (rank, file)
-        return (int(rank) - 1, ord(file) - ord("A"))
+        return (8 - int(rank), ord(file) - ord("A"))
 
     #creates the starting layout of the chessboard.Each list contains the pieces in their starting positions, with the black pieces at the top and white pieces at the bottom. Empty squares are represented by spaces 
     def initialize_board(self):
@@ -163,7 +227,7 @@ class ChessBoard:
 
         print("A  B  C  D  E  F  G  H\n")
         for i, row in enumerate(self.board):
-            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", i + 1)
+            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", 8 - i)
         print()
 
     # takes a position as input and returns the piece located at that position on the board.
@@ -238,14 +302,12 @@ def play_game():
         # Player move (simple manual input for demonstration)
         start = tuple(input(f"{board.turn.capitalize()}'s turn. Enter start position (FileRank): ").upper())
         start = ChessBoard.file_rank_to_coords(start[0], start[1])
-        print(start)
         end = tuple(input("Enter the end position (FileRank): ").upper())
         end = ChessBoard.file_rank_to_coords(end[0], end[1])
-        print(end)
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
-            
+
             # Switch turns
             board.turn = BLACK if board.turn == WHITE else WHITE
             
