@@ -2,28 +2,19 @@
 from game import ChessBoard, Pawn, Piece
 
 class Bot:
-    def __init__(self, game: ChessBoard):
-        self.game: ChessBoard = game
-
-    def evaluate(self, board=None):
-        if board is None:
-            board = self.board
-        
+    def evaluate(self):        
         ...
 
-    def minimax(self, board: ChessBoard=None, depth=0):
-        if board is None:
-            board = self.game
-
+    def minimax(self, board: ChessBoard, depth=0):
         if depth == 0 or board.is_checkmate():
             return ...
         
-    @staticmethod
-    def get_piece_val(game, pos):
+    def get_piece_val(self, board, pos):
         '''
         This funciton should return the value of a piece in a given position in the gien board
         '''
-        piece = game.get_piece(pos)
+
+        piece = board.get_piece(pos)
         row, col = pos
         if isinstance(piece, Piece):  # Check if the piece is a pawn
             if piece.color=='black':
