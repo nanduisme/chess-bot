@@ -24,12 +24,12 @@ class Bot:
                     if moves:
                         valid_moves.extend(list(map(lambda x: ((row, col), x), moves)))
 
-        ret = float("inf") if white_turn else float("-inf")
+        ret = float("-inf") if white_turn else float("inf")
         ret_move = ((-1, -1), (-1, -1))
         for move in valid_moves:
             clone = board.clone()
             clone.move_piece(*move)
-            val, move = self.minimax(clone, depth - 1, not white_turn)
+            val, _ = self.minimax(clone, depth - 1, not white_turn)
 
             if (val < ret and not white_turn) or (val > ret and white_turn):
                 ret = val
@@ -49,7 +49,7 @@ class Bot:
                 return -(piece.bonus[::-1][row][col] + piece.value)
             elif piece.color == "white":
                 return piece.bonus[row][col] + piece.value
-        return 0  # Default if no bonus is applicable
+        return 0  # Default if no bonus is applicable
 
 
 def play_vs_bot():
@@ -66,6 +66,7 @@ def play_vs_bot():
             ).upper()
         )
         start = ChessBoard.file_rank_to_coords(start[0], start[1])
+        
         end = tuple(input("Enter the end position (FileRank): ").upper())
         end = ChessBoard.file_rank_to_coords(end[0], end[1])
 
@@ -83,6 +84,8 @@ def play_vs_bot():
                     break
                 else:
                     print("check!!")
+
+            board.print_board()
 
             val, move = bot.minimax(board, 2, False)
 
