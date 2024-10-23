@@ -58,6 +58,7 @@ def play_vs_bot():
 
     while True:
         board.print_board()
+        print()
 
         # Player move (simple manual input for demonstration)
         start = tuple(
@@ -66,7 +67,6 @@ def play_vs_bot():
             ).upper()
         )
         start = ChessBoard.file_rank_to_coords(start[0], start[1])
-        
         end = tuple(input("Enter the end position (FileRank): ").upper())
         end = ChessBoard.file_rank_to_coords(end[0], end[1])
 
@@ -86,11 +86,10 @@ def play_vs_bot():
                     print("check!!")
 
             board.print_board()
+            print()
 
             val, move = bot.minimax(board, 2, False)
-
             board.move_piece(*move)
-
             board.turn = WHITE
 
             if board.is_in_check(board.turn):
