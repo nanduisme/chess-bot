@@ -438,11 +438,21 @@ class ChessBoard:
                     for move in piece.valid_moves(self, (x, y)):
                         start = (x, y)
                         end = move
-                        self.move_piece(start, end)
+                        captured_piece = self.get_piece(end)  # Save the captured piece
+                        
+                        # Manually update the board state
+                        self.board[end[0]][end[1]] = piece
+                        self.board[start[0]][start[1]] = ' '
+                        
                         if not self.is_in_check(self.turn):
-                            self.move_piece(end, start)  # Undo move
+                            # Undo the move
+                            self.board[start[0]][start[1]] = piece
+                            self.board[end[0]][end[1]] = captured_piece
                             return False
-                        self.move_piece(end, start)  # Undo move
+                        
+                        # Undo the move
+                        self.board[start[0]][start[1]] = piece
+                        self.board[end[0]][end[1]] = captured_piece
         return True
     
     def is_under_attack(self, pos, color):
@@ -470,6 +480,7 @@ class ChessBoard:
 # Game Loop without AI
 def play_game():
     board = ChessBoard()
+    board.check_checkmate()
 
     while True:
         board.print_board()
@@ -479,6 +490,7 @@ def play_game():
         start = ChessBoard.file_rank_to_coords(start[0], start[1])
         end = tuple(input("Enter the end position (FileRank): ").upper())
         end = ChessBoard.file_rank_to_coords(end[0], end[1])
+        
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
@@ -487,9 +499,14 @@ def play_game():
             board.turn = BLACK if board.turn == WHITE else WHITE
             
             # Check for checkmate
-            if board.is_checkmate():
-                print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
-                break
+
+            if board.is_in_check(board.turn):
+                if board.check_checkmate():
+                    print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
+                    break
+                else:
+                    print("check!!")
+
         else:
             print("Invalid move. Try again.")
 
