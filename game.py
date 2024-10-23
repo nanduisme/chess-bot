@@ -24,6 +24,9 @@ class Piece:
     def valid_moves(self, pos):
         pass  # This is a placeholder method to be implemented by specific piece types
 
+    def __repr__(self):
+        pass
+
 # Class for Pawn Piece
 class Pawn(Piece):
     def __init__(self, color):
@@ -61,6 +64,9 @@ class Pawn(Piece):
                     moves.append((x + direction, y + dy))
 
         return moves  # Return the list of valid moves
+    
+    def __repr__(self):
+        return '♟' if self.color == WHITE else '♙'
 
     def __repr__(self):
         return f"{'W' if self.color == WHITE else 'B'}P"
@@ -101,6 +107,9 @@ class Rook(Piece):
                     break  # Stop moving if it's our own piece
                 nx, ny = nx + dx, ny + dy  # Move further in the same direction
         return moves  # Return the list of valid moves
+    
+    def __repr__(self):
+        return '♜' if self.color == WHITE else '♖'
 
     def __repr__(self):
         return f"{'W' if self.color == WHITE else 'B'}R"
@@ -133,6 +142,9 @@ class Knight(Piece):
 
                     valid_moves.append((nx, ny))
         return valid_moves  # Return the list of valid moves
+    
+    def __repr__(self):
+        return '♞' if self.color == WHITE else '♘'
 
     def __repr__(self):
         return f"{'W' if self.color == WHITE else 'B'}K"
@@ -174,6 +186,9 @@ class Bishop(Piece):
                     break  # Stop moving if it's our own piece
                 nx, ny = nx + dx, ny + dy  # Move further in the same direction
         return moves  # Return the list of valid moves
+    
+    def __repr__(self):
+        return '♝' if self.color == WHITE else '♗'
 
     def __repr__(self):
         return f"{'W' if self.color == WHITE else 'B'}B"
@@ -196,6 +211,9 @@ class Queen(Piece):
     def valid_moves(self, board, pos, en_passant_target=None):
         # Combine Rook and Bishop movement logic since Queen moves like both
         return Rook(self.color).valid_moves(board, pos) + Bishop(self.color).valid_moves(board, pos)
+    
+    def __repr__(self):
+        return '♛' if self.color == WHITE else '♕'
 
     def __repr__(self):
         return f"{'W' if self.color == WHITE else 'B'}Q"
@@ -268,6 +286,9 @@ class King(Piece):
             isinstance(board.get_piece((x, 0)), Rook) and
             not board.get_piece((x, 0)).has_moved
         )
+    
+    def __repr__(self):
+        return '♚' if self.color == WHITE else '♔'
 
 # Chess Board Setup
 class ChessBoard:
@@ -387,7 +408,7 @@ class ChessBoard:
 
         print("A  B  C  D  E  F  G  H\n")
         for i, row in enumerate(self.board):
-            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", 8 - i)
+            print('  '.join([repr(piece) if isinstance(piece, Piece) else ' ' for piece in row]), "  ", 8 - i)
         print()
 
     # takes a position as input and returns the piece located at that position on the board.
@@ -503,7 +524,7 @@ class ChessBoard:
 # Game Loop without AI
 def play_game():
     board = ChessBoard()
-
+    
     while True:
         board.print_board()
 
