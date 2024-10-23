@@ -68,6 +68,9 @@ class Pawn(Piece):
     def __repr__(self):
         return '♟' if self.color == WHITE else '♙'
 
+    def __repr__(self):
+        return f"{'W' if self.color == WHITE else 'B'}P"
+
 # Class for Rook Piece
 class Rook(Piece):
     def __init__(self, color):
@@ -108,6 +111,10 @@ class Rook(Piece):
     def __repr__(self):
         return '♜' if self.color == WHITE else '♖'
 
+    def __repr__(self):
+        return f"{'W' if self.color == WHITE else 'B'}R"
+
+
 # Class for Knight Piece
 class Knight(Piece):
     def __init__(self, color):
@@ -138,6 +145,9 @@ class Knight(Piece):
     
     def __repr__(self):
         return '♞' if self.color == WHITE else '♘'
+
+    def __repr__(self):
+        return f"{'W' if self.color == WHITE else 'B'}K"
 
 # Class for Bishop Piece
 class Bishop(Piece):
@@ -180,6 +190,9 @@ class Bishop(Piece):
     def __repr__(self):
         return '♝' if self.color == WHITE else '♗'
 
+    def __repr__(self):
+        return f"{'W' if self.color == WHITE else 'B'}B"
+
 # Class for Queen Piece
 class Queen(Piece):
     def __init__(self, color):
@@ -201,6 +214,9 @@ class Queen(Piece):
     
     def __repr__(self):
         return '♛' if self.color == WHITE else '♕'
+
+    def __repr__(self):
+        return f"{'W' if self.color == WHITE else 'B'}Q"
 
 # Class for King Piece
 class King(Piece):
@@ -240,6 +256,9 @@ class King(Piece):
                     moves.append((x, y - 2))
                     
         return moves  # Return the list of valid moves
+
+    def __repr__(self):
+        return f"{'W' if self.color == WHITE else 'B'}K"
 
     def _can_castle_kingside(self, board, pos):
         x, y = pos
@@ -363,6 +382,10 @@ class ChessBoard:
 
         # Returns (rank, file)
         return (8 - int(rank), ord(file) - ord("A"))
+
+    @staticmethod
+    def coords_to_file_rank(row, col):
+        return chr(ord('A') + col) + str(8 - row)
 
     #creates the starting layout of the chessboard.Each list contains the pieces in their starting positions, with the black pieces at the top and white pieces at the bottom. Empty squares are represented by spaces 
     def initialize_board(self):
@@ -501,8 +524,7 @@ class ChessBoard:
 # Game Loop without AI
 def play_game():
     board = ChessBoard()
-
-
+    
     while True:
         board.print_board()
 
