@@ -1,4 +1,3 @@
-# from .game import ChessBoard,Pawn
 from game import ChessBoard, Pawn, Piece
 
 class Bot:
@@ -9,9 +8,12 @@ class Bot:
                 score+=self.get_piece_val(board,(row,col))
         return score         
 
-    def minimax(self, board: ChessBoard, depth=0):
+    def minimax(self, board: ChessBoard, depth=0, to_min=True):
         if depth == 0 or board.is_checkmate():
-            return ...
+            return self.evaluate(board)
+
+        ret = float("inf") if to_min else float("-inf")
+
         
     def get_piece_val(self, board, pos):
         '''

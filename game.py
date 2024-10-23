@@ -223,6 +223,15 @@ class ChessBoard:
             BLACK: {'kingside': True, 'queenside': True}
         }
 
+    def clone(self):
+        ret = ChessBoard()
+        ret.board = self.board
+        ret.turn = self.turn
+        ret.en_passant_target = self.en_passant_target
+        ret.castling_rights = self.castling_rights
+
+        return ret
+
 
     @classmethod
     def from_fen(cls, fen_str):
