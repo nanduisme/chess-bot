@@ -21,9 +21,6 @@ class Piece:
         self.color = color  # Every piece has a color (white or black)
         self.has_moved = False  # Tracks whether the piece has moved (important for castling)
 
-    def __repr__(self):
-        pass
-
     def valid_moves(self, pos):
         pass  # This is a placeholder method to be implemented by specific piece types
 
@@ -64,8 +61,6 @@ class Pawn(Piece):
                     moves.append((x + direction, y + dy))
 
         return moves  # Return the list of valid moves
-    def __repr__(self):
-        return self.color[0].upper() + 'P' 
 
 # Class for Rook Piece
 class Rook(Piece):
@@ -103,9 +98,6 @@ class Rook(Piece):
                     break  # Stop moving if it's our own piece
                 nx, ny = nx + dx, ny + dy  # Move further in the same direction
         return moves  # Return the list of valid moves
-    
-    def __repr__(self):
-        return self.color[0].upper() + 'R'
 
 # Class for Knight Piece
 class Knight(Piece):
@@ -134,9 +126,6 @@ class Knight(Piece):
 
                     valid_moves.append((nx, ny))
         return valid_moves  # Return the list of valid moves
-    
-    def __repr__(self):
-        return self.color[0].upper() + 'N'
 
 # Class for Bishop Piece
 class Bishop(Piece):
@@ -175,9 +164,6 @@ class Bishop(Piece):
                     break  # Stop moving if it's our own piece
                 nx, ny = nx + dx, ny + dy  # Move further in the same direction
         return moves  # Return the list of valid moves
-    
-    def __repr__(self):
-        return self.color[0].upper() + 'B'
 
 # Class for Queen Piece
 class Queen(Piece):
@@ -197,9 +183,6 @@ class Queen(Piece):
     def valid_moves(self, board, pos, en_passant_target=None):
         # Combine Rook and Bishop movement logic since Queen moves like both
         return Rook(self.color).valid_moves(board, pos) + Bishop(self.color).valid_moves(board, pos)
-    
-    def __repr__(self):
-        return self.color[0].upper() + 'Q'
 
 # Class for King Piece
 class King(Piece):
@@ -266,9 +249,6 @@ class King(Piece):
             isinstance(board.get_piece((x, 0)), Rook) and
             not board.get_piece((x, 0)).has_moved
         )
-    
-    def __repr__(self):
-        return self.color[0].upper() + 'K'
 
 # Chess Board Setup
 class ChessBoard:
@@ -500,8 +480,7 @@ class ChessBoard:
 # Game Loop without AI
 def play_game():
     board = ChessBoard()
-    pawn = Pawn(WHITE)
-    print(pawn)
+    board.check_checkmate()
 
     while True:
         board.print_board()
