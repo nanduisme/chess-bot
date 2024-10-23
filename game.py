@@ -4,6 +4,19 @@ WHITE, BLACK = 'white', 'black'  # Defining constants for white and black pieces
 # Chess Pieces Classes
 class Piece:
     def __init__(self, color):
+        self.value = None
+        self.bonus = [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+
+
         self.color = color  # Every piece has a color (white or black)
         self.has_moved = False  # Tracks whether the piece has moved (important for castling)
 
@@ -12,6 +25,18 @@ class Piece:
 
 # Class for Pawn Piece
 class Pawn(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 100
+        self.bonus = [[0, 0, 0, 0, 0, 0, 0, 0],
+                      [50, 50, 50, 50, 50, 50, 50, 50],
+                      [10, 10, 20, 30, 30, 20, 10, 10],
+                      [5, 5, 10, 25, 25, 10, 5, 5],
+                      [0, 0, 0, 20, 20, 0, 0, 0],
+                      [5, -5, -10, 0, 0, -10, -5, 5],
+                      [5, 10, 10, -20, -20, 10, 10, 5],
+                      [0, 0, 0, 0, 0, 0, 0, 0]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         moves = []  # List to store valid moves for the pawn
         x, y = pos  # Current position of the pawn
@@ -38,6 +63,19 @@ class Pawn(Piece):
 
 # Class for Rook Piece
 class Rook(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 500
+        self.bonus = [
+            [0,  0,  0,  5,  5,  0,  0,  0],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [5, 10, 10, 10, 10, 10, 10,  5],
+            [0,  0,  0,  0,  0,  0,  0, 0]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # Rook can move in four directions (up, down, left, right)
         return self._generate_sliding_moves(board, pos, directions)  # Generate all valid moves for rook
@@ -62,6 +100,18 @@ class Rook(Piece):
 
 # Class for Knight Piece
 class Knight(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 320
+        self.bonus = [[-50, -40, -30, -30, -30, -30, -40, -50],
+                      [-40, -20, 0, 0, 0, 0, -20, -40],
+                      [-30, 0, 10, 15, 15, 10, 0, -30],
+                      [-30, 5, 15, 20, 20, 15, 5, -30],
+                      [-30, 0, 15, 20, 20, 15, 0, -30],
+                      [-30, 5, 10, 15, 15, 10, 5, -30],
+                      [-40, -20, 0, 5, 5, 0, -20, -40],
+                      [-50, -40, -30, -30, -30, -30, -40, -50]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
 
         directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]  # Knight's L-shaped moves
@@ -78,6 +128,20 @@ class Knight(Piece):
 
 # Class for Bishop Piece
 class Bishop(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 330
+        self.bonus = [
+            [-20, -10, -10, -10, -10, -10, -10, -20],
+            [-10, 0, 0, 0, 0, 0, 0, -10],
+            [-10, 0, 5, 10, 10, 5, 0, -10],
+            [-10, 5, 5, 10, 10, 5, 5, -10],
+            [-10, 0, 10, 10, 10, 10, 0, -10],
+            [-10, 10, 10, 10, 10, 10, 10, -10],
+            [-10, 5, 0, 0, 0, 0, 5, -10],
+            [-20, -10, -10, -10, -10, -10, -10, -20]
+    ]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]  # Bishop moves diagonally in four directions
         return self._generate_sliding_moves(board, pos, directions)  # Generate all valid moves for bishop
@@ -102,12 +166,37 @@ class Bishop(Piece):
 
 # Class for Queen Piece
 class Queen(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 900
+        self.bonus = [
+                      [-20, -10, -10, -5, -5, -10, -10, -20],
+                      [-10, 0, 0, 0, 0, 0, 0, -10],
+                      [-10, 0, 5, 5, 5, 5, 0, -10],
+                      [-5, 0, 5, 5, 5, 5, 0, -5],
+                      [0, 0, 5, 5, 5, 5, 0, -5],
+                      [-10, 5, 5, 5, 5, 5, 0, -10],
+                      [-10, 0, 5, 0, 0, 0, 0, -10],
+                      [-20, -10, -10, -5, -5, -10, -10, -20]
+            ]
     def valid_moves(self, board, pos, en_passant_target=None):
         # Combine Rook and Bishop movement logic since Queen moves like both
         return Rook(self.color).valid_moves(board, pos) + Bishop(self.color).valid_moves(board, pos)
 
 # Class for King Piece
 class King(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 20000
+        self.bonus = [[-30, -40, -40, -50, -50, -40, -40, -30],
+                      [-30, -40, -40, -50, -50, -40, -40, -30],
+                      [-30, -40, -40, -50, -50, -40, -40, -30],
+                      [-30, -40, -40, -50, -50, -40, -40, -30],
+                      [-20, -30, -30, -40, -40, -30, -30, -20],
+                      [-10, -20, -20, -20, -20, -20, -20, -10],
+                      [20, 20, 0, 0, 0, 0, 20, 20],
+                      [20, 30, 10, 0, 0, 10, 30, 20]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [
             (1, 0), (-1, 0), (0, 1), (0, -1),  # King's movement: one square in any horizontal or vertical direction
@@ -133,6 +222,7 @@ class ChessBoard:
             WHITE: {'kingside': True, 'queenside': True},
             BLACK: {'kingside': True, 'queenside': True}
         }
+
 
     @classmethod
     def from_fen(cls, fen_str):
