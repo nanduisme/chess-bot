@@ -25,22 +25,3 @@ class Bot:
 
 
 
-# Assume ChessBoard and Pawn are correctly implemented and imported
-
-def test_get_piece_val():
-    # Initialize ChessBoard
-    board = ChessBoard()
-
-    # Place a Pawn at position (1, 0) (or any desired position)
-    board.print_board()
-    
-    # Test position (1, 0) where the Pawn is placed
-    position = (0, 1)
-    
-    # Call get_piece_val method and print the result
-    value = Bot.get_piece_val(board, position)
-    print(board.get_piece(position))
-    print(f"Value of piece at {position}: {value}")
-
-# Run the test
-test_get_piece_val()
