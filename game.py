@@ -21,11 +21,11 @@ class Piece:
         self.color = color  # Every piece has a color (white or black)
         self.has_moved = False  # Tracks whether the piece has moved (important for castling)
 
-    def __repr__(self):
-        pass
-
     def valid_moves(self, pos):
         pass  # This is a placeholder method to be implemented by specific piece types
+
+    def __repr__(self):
+        pass
 
 # Class for Pawn Piece
 class Pawn(Piece):
@@ -64,8 +64,9 @@ class Pawn(Piece):
                     moves.append((x + direction, y + dy))
 
         return moves  # Return the list of valid moves
+    
     def __repr__(self):
-        return self.color[0].upper() + 'P' 
+        return '♟' if self.color == WHITE else '♙'
 
 # Class for Rook Piece
 class Rook(Piece):
@@ -105,7 +106,7 @@ class Rook(Piece):
         return moves  # Return the list of valid moves
     
     def __repr__(self):
-        return self.color[0].upper() + 'R'
+        return '♜' if self.color == WHITE else '♖'
 
 # Class for Knight Piece
 class Knight(Piece):
@@ -136,7 +137,7 @@ class Knight(Piece):
         return valid_moves  # Return the list of valid moves
     
     def __repr__(self):
-        return self.color[0].upper() + 'N'
+        return '♞' if self.color == WHITE else '♘'
 
 # Class for Bishop Piece
 class Bishop(Piece):
@@ -177,7 +178,7 @@ class Bishop(Piece):
         return moves  # Return the list of valid moves
     
     def __repr__(self):
-        return self.color[0].upper() + 'B'
+        return '♝' if self.color == WHITE else '♗'
 
 # Class for Queen Piece
 class Queen(Piece):
@@ -199,7 +200,7 @@ class Queen(Piece):
         return Rook(self.color).valid_moves(board, pos) + Bishop(self.color).valid_moves(board, pos)
     
     def __repr__(self):
-        return self.color[0].upper() + 'Q'
+        return '♛' if self.color == WHITE else '♕'
 
 # Class for King Piece
 class King(Piece):
@@ -268,7 +269,7 @@ class King(Piece):
         )
     
     def __repr__(self):
-        return self.color[0].upper() + 'K'
+        return '♚' if self.color == WHITE else '♔'
 
 # Chess Board Setup
 class ChessBoard:
@@ -384,7 +385,7 @@ class ChessBoard:
 
         print("A  B  C  D  E  F  G  H\n")
         for i, row in enumerate(self.board):
-            print(' '.join([f"{piece.color[0].upper()}{piece_symbols[type(piece)]}" if isinstance(piece, Piece) else '  ' for piece in row]), " ", 8 - i)
+            print('  '.join([repr(piece) if isinstance(piece, Piece) else ' ' for piece in row]), "  ", 8 - i)
         print()
 
     # takes a position as input and returns the piece located at that position on the board.
@@ -500,8 +501,7 @@ class ChessBoard:
 # Game Loop without AI
 def play_game():
     board = ChessBoard()
-    pawn = Pawn(WHITE)
-    print(pawn)
+
 
     while True:
         board.print_board()
