@@ -1,9 +1,23 @@
+import copy 
 # Constants
 WHITE, BLACK = 'white', 'black'  # Defining constants for white and black pieces
 
 # Chess Pieces Classes
 class Piece:
     def __init__(self, color):
+        self.value = None
+        self.bonus = [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+
+
         self.color = color  # Every piece has a color (white or black)
         self.has_moved = False  # Tracks whether the piece has moved (important for castling)
 
@@ -12,16 +26,28 @@ class Piece:
 
 # Class for Pawn Piece
 class Pawn(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 100
+        self.bonus = [[0, 0, 0, 0, 0, 0, 0, 0],
+                      [50, 50, 50, 50, 50, 50, 50, 50],
+                      [10, 10, 20, 30, 30, 20, 10, 10],
+                      [5, 5, 10, 25, 25, 10, 5, 5],
+                      [0, 0, 0, 20, 20, 0, 0, 0],
+                      [5, -5, -10, 0, 0, -10, -5, 5],
+                      [5, 10, 10, -20, -20, 10, 10, 5],
+                      [0, 0, 0, 0, 0, 0, 0, 0]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         moves = []  # List to store valid moves for the pawn
         x, y = pos  # Current position of the pawn
         direction = -1 if self.color == WHITE else 1  # Pawns move up (for white) or down (for black)
 
         # Move forward by one square
-        if 0 <= x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
+        if 0 <= x + direction and x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
             moves.append((x + direction, y))  # Add the forward move
             # Two-square move from starting position
-            if not self.has_moved and 0 <= x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
+            if not self.has_moved and 0 <= x + 2 * direction and x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
                 moves.append((x + 2 * direction, y))  # Add the two-square move
 
         # Diagonal captures
@@ -38,6 +64,19 @@ class Pawn(Piece):
 
 # Class for Rook Piece
 class Rook(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 500
+        self.bonus = [
+            [0,  0,  0,  5,  5,  0,  0,  0],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [-5,  0,  0,  0,  0,  0,  0, -5],
+            [5, 10, 10, 10, 10, 10, 10,  5],
+            [0,  0,  0,  0,  0,  0,  0, 0]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # Rook can move in four directions (up, down, left, right)
         return self._generate_sliding_moves(board, pos, directions)  # Generate all valid moves for rook
@@ -62,6 +101,18 @@ class Rook(Piece):
 
 # Class for Knight Piece
 class Knight(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 320
+        self.bonus = [[-50, -40, -30, -30, -30, -30, -40, -50],
+                      [-40, -20, 0, 0, 0, 0, -20, -40],
+                      [-30, 0, 10, 15, 15, 10, 0, -30],
+                      [-30, 5, 15, 20, 20, 15, 5, -30],
+                      [-30, 0, 15, 20, 20, 15, 0, -30],
+                      [-30, 5, 10, 15, 15, 10, 5, -30],
+                      [-40, -20, 0, 5, 5, 0, -20, -40],
+                      [-50, -40, -30, -30, -30, -30, -40, -50]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
 
         directions = [(2, 1), (2, -1), (-2, 1), (-2, -1), (1, 2), (1, -2), (-1, 2), (-1, -2)]  # Knight's L-shaped moves
@@ -78,6 +129,20 @@ class Knight(Piece):
 
 # Class for Bishop Piece
 class Bishop(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 330
+        self.bonus = [
+            [-20, -10, -10, -10, -10, -10, -10, -20],
+            [-10, 0, 0, 0, 0, 0, 0, -10],
+            [-10, 0, 5, 10, 10, 5, 0, -10],
+            [-10, 5, 5, 10, 10, 5, 5, -10],
+            [-10, 0, 10, 10, 10, 10, 0, -10],
+            [-10, 10, 10, 10, 10, 10, 10, -10],
+            [-10, 5, 0, 0, 0, 0, 5, -10],
+            [-20, -10, -10, -10, -10, -10, -10, -20]
+    ]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]  # Bishop moves diagonally in four directions
         return self._generate_sliding_moves(board, pos, directions)  # Generate all valid moves for bishop
@@ -102,12 +167,37 @@ class Bishop(Piece):
 
 # Class for Queen Piece
 class Queen(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 900
+        self.bonus = [
+                      [-20, -10, -10, -5, -5, -10, -10, -20],
+                      [-10, 0, 0, 0, 0, 0, 0, -10],
+                      [-10, 0, 5, 5, 5, 5, 0, -10],
+                      [-5, 0, 5, 5, 5, 5, 0, -5],
+                      [0, 0, 5, 5, 5, 5, 0, -5],
+                      [-10, 5, 5, 5, 5, 5, 0, -10],
+                      [-10, 0, 5, 0, 0, 0, 0, -10],
+                      [-20, -10, -10, -5, -5, -10, -10, -20]
+            ]
     def valid_moves(self, board, pos, en_passant_target=None):
         # Combine Rook and Bishop movement logic since Queen moves like both
         return Rook(self.color).valid_moves(board, pos) + Bishop(self.color).valid_moves(board, pos)
 
 # Class for King Piece
 class King(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 20000
+        self.bonus = [[-30, -40, -40, -50, -50, -40, -40, -30],
+                      [-30, -40, -40, -50, -50, -40, -40, -30],
+                      [-30, -40, -40, -50, -50, -40, -40, -30],
+                      [-30, -40, -40, -50, -50, -40, -40, -30],
+                      [-20, -30, -30, -40, -40, -30, -30, -20],
+                      [-10, -20, -20, -20, -20, -20, -20, -10],
+                      [20, 20, 0, 0, 0, 0, 20, 20],
+                      [20, 30, 10, 0, 0, 10, 30, 20]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [
             (1, 0), (-1, 0), (0, 1), (0, -1),  # King's movement: one square in any horizontal or vertical direction
@@ -170,6 +260,16 @@ class ChessBoard:
             WHITE: {'kingside': True, 'queenside': True},
             BLACK: {'kingside': True, 'queenside': True}
         } #Both players start with the ability to castle on both the kingside and queenside.
+
+
+    def clone(self):
+        ret = ChessBoard()
+        ret.board = copy.deepcopy(self.board)
+        ret.turn = self.turn
+        ret.en_passant_target = self.en_passant_target
+        ret.castling_rights = copy.deepcopy(self.castling_rights)
+
+        return ret
 
 
     @classmethod
@@ -273,6 +373,12 @@ class ChessBoard:
         piece = self.board[x][y]
         return piece if piece != ' ' else " "
 
+    def get_valid_moves(self, pos):
+        piece = self.get_piece(pos)
+        if piece == " ":
+            return []
+        return piece.valid_moves(self, pos, self.en_passant_target)
+
     def move_piece(self, start, end):
         """Move the piece and handle special cases like castling."""
         sx, sy = start
@@ -290,7 +396,9 @@ class ChessBoard:
 
         self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
-        piece.has_moved = True
+
+        if piece != ' ':
+            piece.has_moved = True
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
@@ -322,7 +430,7 @@ class ChessBoard:
                         return True
         return False
 
-    def check_checkmate(self):
+    def is_checkmate(self):
         for x in range(8):
             for y in range(8):
                 piece = self.get_piece((x, y))
@@ -391,13 +499,13 @@ def play_game():
             board.turn = BLACK if board.turn == WHITE else WHITE
             
             # Check for checkmate
+
             if board.is_in_check(board.turn):
                 if board.check_checkmate():
                     print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
                     break
                 else:
                     print("check!!")
-                    
 
         else:
             print("Invalid move. Try again.")
