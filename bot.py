@@ -79,7 +79,7 @@ def play_vs_bot():
             # Check for checkmate
 
             if board.is_in_check(board.turn):
-                if board.check_checkmate():
+                if board.is_checkmate():
                     print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
                     break
                 else:
@@ -93,7 +93,7 @@ def play_vs_bot():
             board.turn = WHITE
 
             if board.is_in_check(board.turn):
-                if board.check_checkmate():
+                if board.is_checkmate():
                     print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
                     break
                 else:
