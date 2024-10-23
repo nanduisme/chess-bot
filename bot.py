@@ -2,8 +2,12 @@
 from game import ChessBoard, Pawn, Piece
 
 class Bot:
-    def evaluate(self):        
-        ...
+    def evaluate(self,board):        
+        score = 0
+        for row in range(8):
+            for col in range (8):
+                score+=self.get_piece_val(board,(row,col))
+        return score         
 
     def minimax(self, board: ChessBoard, depth=0):
         if depth == 0 or board.is_checkmate():
@@ -24,4 +28,11 @@ class Bot:
         return 0  # Default if no bonus is applicable
 
 
-
+if __name__ == "__main__":
+    board = ChessBoard()
+    bot = Bot()
+    board.print_board()
+    board.move_piece(ChessBoard.file_rank_to_coords("D",2),ChessBoard.file_rank_to_coords("D",4))
+    board.print_board()
+    print(bot.evaluate(board))
+    
