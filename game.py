@@ -1,3 +1,4 @@
+import copy 
 # Constants
 WHITE, BLACK = 'white', 'black'  # Defining constants for white and black pieces
 
@@ -43,10 +44,10 @@ class Pawn(Piece):
         direction = -1 if self.color == WHITE else 1  # Pawns move up (for white) or down (for black)
 
         # Move forward by one square
-        if 0 <= x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
+        if 0 <= x + direction and x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
             moves.append((x + direction, y))  # Add the forward move
             # Two-square move from starting position
-            if not self.has_moved and 0 <= x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
+            if not self.has_moved and 0 <= x + 2 * direction and x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
                 moves.append((x + 2 * direction, y))  # Add the two-square move
 
         # Diagonal captures
@@ -263,10 +264,10 @@ class ChessBoard:
 
     def clone(self):
         ret = ChessBoard()
-        ret.board = self.board
+        ret.board = copy.deepcopy(self.board)
         ret.turn = self.turn
         ret.en_passant_target = self.en_passant_target
-        ret.castling_rights = self.castling_rights
+        ret.castling_rights = copy.deepcopy(self.castling_rights)
 
         return ret
 
@@ -372,6 +373,12 @@ class ChessBoard:
         piece = self.board[x][y]
         return piece if piece != ' ' else " "
 
+    def get_valid_moves(self, pos):
+        piece = self.get_piece(pos)
+        if piece == " ":
+            return []
+        return piece.valid_moves(self, pos, self.en_passant_target)
+
     def move_piece(self, start, end):
         """Move the piece and handle special cases like castling."""
         sx, sy = start
@@ -389,7 +396,9 @@ class ChessBoard:
 
         self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
-        piece.has_moved = True
+
+        if piece != ' ':
+            piece.has_moved = True
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)

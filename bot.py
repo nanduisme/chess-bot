@@ -13,8 +13,15 @@ class Bot:
             return self.evaluate(board)
 
         ret = float("inf") if to_min else float("-inf")
+        valid_moves = []
+        for row in range(8):
+            for col in range(8):
+                moves = board.get_valid_moves((row, col))
+                if moves: 
+                    valid_moves.extend(list(map(lambda x: ((row, col), x), moves)))
 
-        
+        return valid_moves
+
     def get_piece_val(self, board, pos):
         '''
         This funciton should return the value of a piece in a given position in the gien board
@@ -34,7 +41,16 @@ if __name__ == "__main__":
     board = ChessBoard()
     bot = Bot()
     board.print_board()
-    board.move_piece(ChessBoard.file_rank_to_coords("D",2),ChessBoard.file_rank_to_coords("D",4))
-    board.print_board()
-    print(bot.evaluate(board))
+    moves = bot.minimax(board, 1)
+    print(len(moves))
+
+    print(board.get_valid_moves((6, 0)))
+
+    # for start, stop in moves:
+    #     clone = board.clone()
+    #     clone.move_piece(start, stop)
+    #     print(start, stop)
+    #     clone.print_board()
+    #     print("-----------------------")
     
+
