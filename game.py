@@ -24,6 +24,14 @@ class Piece:
     def valid_moves(self, pos):
         pass  # This is a placeholder method to be implemented by specific piece types
 
+    def filter_moves(self, board, pos, moves):
+        """Filter out moves that would leave the king in check."""
+        valid_moves = []
+        for move in moves:
+            if not board.move_leaves_king_in_check(pos, move):
+                valid_moves.append(move)
+        return valid_moves
+
     def __repr__(self):
         pass
 
@@ -62,7 +70,6 @@ class Pawn(Piece):
                 # En Passant capture
                 if en_passant_target == (x + direction, y + dy):  # Special rule: capture via en passant
                     moves.append((x + direction, y + dy))
-
         return moves  # Return the list of valid moves
     
     def __repr__(self):
@@ -85,7 +92,8 @@ class Rook(Piece):
 
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]  # Rook can move in four directions (up, down, left, right)
-        return self._generate_sliding_moves(board, pos, directions)  # Generate all valid moves for rook
+        moves = self._generate_sliding_moves(board, pos, directions)
+        return  moves # Generate all valid moves for rook
 
     # Helper method for sliding pieces (rook and bishop)
     def _generate_sliding_moves(self, board, pos, directions):
@@ -103,6 +111,7 @@ class Rook(Piece):
                 else:
                     break  # Stop moving if it's our own piece
                 nx, ny = nx + dx, ny + dy  # Move further in the same direction
+        
         return moves  # Return the list of valid moves
     
     def __repr__(self):
@@ -157,7 +166,8 @@ class Bishop(Piece):
 
     def valid_moves(self, board, pos, en_passant_target=None):
         directions = [(1, 1), (1, -1), (-1, 1), (-1, -1)]  # Bishop moves diagonally in four directions
-        return self._generate_sliding_moves(board, pos, directions)  # Generate all valid moves for bishop
+        moves = self._generate_sliding_moves(board, pos, directions)
+        return  moves # Generate all valid moves for bishop
 
     # Helper method for sliding pieces (same as in Rook)
     def _generate_sliding_moves(self, board, pos, directions):
@@ -237,8 +247,7 @@ class King(Piece):
                     moves.append((x, y + 2))
             if board.castling_rights[self.color]['queenside']:
                 if self._can_castle_queenside(board, pos):
-                    moves.append((x, y - 2))
-                    
+                    moves.append((x, y - 2))           
         return moves  # Return the list of valid moves
 
     def _can_castle_kingside(self, board, pos):
@@ -430,6 +439,7 @@ class ChessBoard:
             print("Piece belongs to the opponent.")
             return False
         valid_moves = piece.valid_moves(self, start, self.en_passant_target)
+        valid_moves = piece.filter_moves(self,start,valid_moves)
         if end not in valid_moves:
             print("End position is not a valid move.")
             return False
@@ -494,6 +504,25 @@ class ChessBoard:
                 if isinstance(piece, King) and piece.color == color:
                     return (x, y)
         return None
+    
+    def move_leaves_king_in_check(self, start, end):
+        """Simulate a move and check if it leaves the king in check."""
+        in_check = False
+        piece = self.get_piece(start)
+        captured_piece = self.get_piece(end)
+        
+        # Simulate the move
+        self.board[end[0]][end[1]] = piece
+        self.board[start[0]][start[1]] = ' '
+        
+        if piece != " ":
+            in_check = self.is_in_check(piece.color)
+        
+        # Undo the move
+        self.board[start[0]][start[1]] = piece
+        self.board[end[0]][end[1]] = captured_piece
+        
+        return in_check
 
 
 
@@ -522,7 +551,7 @@ def play_game():
             # Check for checkmate
 
             if board.is_in_check(board.turn):
-                if board.check_checkmate():
+                if board.is_checkmate():
                     print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
                     break
                 else:
