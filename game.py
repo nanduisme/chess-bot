@@ -423,7 +423,7 @@ class ChessBoard:
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
-        if not piece:
+        if piece == ' ':
             print("No piece at start position.")
             return False
         if piece.color != self.turn:
