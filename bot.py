@@ -56,6 +56,8 @@ def play_vs_bot():
     board = ChessBoard()
     bot = Bot()
 
+    history = open("./prev.txt", "w")
+
     while True:
         board.print_board()
         print()
@@ -72,6 +74,7 @@ def play_vs_bot():
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
+            history.write(ChessBoard.coords_to_file_rank(*start) + ChessBoard.coords_to_file_rank(*end) + "\n")
 
             # Switch turns
             board.turn = BLACK
@@ -88,8 +91,10 @@ def play_vs_bot():
             board.print_board()
             print()
 
-            val, move = bot.minimax(board, 2, False)
+            val, move = bot.minimax(board, 3, False)
             board.move_piece(*move)
+            history.write(ChessBoard.coords_to_file_rank(*move[0]) + ChessBoard.coords_to_file_rank(*move[1]) + "\n")
+            
             board.turn = WHITE
 
             if board.is_in_check(board.turn):
@@ -102,6 +107,8 @@ def play_vs_bot():
         else:
             print("Invalid move. Try again.")
 
+
+    history.close()
 
 if __name__ == "__main__":
     play_vs_bot()
