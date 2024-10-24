@@ -383,9 +383,9 @@ class ChessBoard:
         } # maps chess piece classes to their standard chess symbols.
 
 
-        print("A  B  C  D  E  F  G  H\n")
+        print("A |B |C |D |E |F |G |H\n")
         for i, row in enumerate(self.board):
-            print('  '.join([repr(piece) if isinstance(piece, Piece) else ' ' for piece in row]), "  ", 8 - i)
+            print(' |'.join([repr(piece) if isinstance(piece, Piece) else ' ' for piece in row]), "  ", 8 - i)
         print()
 
     # takes a position as input and returns the piece located at that position on the board.
