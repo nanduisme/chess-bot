@@ -68,9 +68,6 @@ class Pawn(Piece):
     def __repr__(self):
         return '♟' if self.color == WHITE else '♙'
 
-    def __repr__(self):
-        return f"{'W' if self.color == WHITE else 'B'}P"
-
 # Class for Rook Piece
 class Rook(Piece):
     def __init__(self, color):
@@ -111,9 +108,6 @@ class Rook(Piece):
     def __repr__(self):
         return '♜' if self.color == WHITE else '♖'
 
-    def __repr__(self):
-        return f"{'W' if self.color == WHITE else 'B'}R"
-
 
 # Class for Knight Piece
 class Knight(Piece):
@@ -145,9 +139,6 @@ class Knight(Piece):
     
     def __repr__(self):
         return '♞' if self.color == WHITE else '♘'
-
-    def __repr__(self):
-        return f"{'W' if self.color == WHITE else 'B'}K"
 
 # Class for Bishop Piece
 class Bishop(Piece):
@@ -190,9 +181,6 @@ class Bishop(Piece):
     def __repr__(self):
         return '♝' if self.color == WHITE else '♗'
 
-    def __repr__(self):
-        return f"{'W' if self.color == WHITE else 'B'}B"
-
 # Class for Queen Piece
 class Queen(Piece):
     def __init__(self, color):
@@ -214,9 +202,6 @@ class Queen(Piece):
     
     def __repr__(self):
         return '♛' if self.color == WHITE else '♕'
-
-    def __repr__(self):
-        return f"{'W' if self.color == WHITE else 'B'}Q"
 
 # Class for King Piece
 class King(Piece):
@@ -256,9 +241,6 @@ class King(Piece):
                     moves.append((x, y - 2))
                     
         return moves  # Return the list of valid moves
-
-    def __repr__(self):
-        return f"{'W' if self.color == WHITE else 'B'}K"
 
     def _can_castle_kingside(self, board, pos):
         x, y = pos
@@ -409,6 +391,7 @@ class ChessBoard:
         print("A |B |C |D |E |F |G |H\n")
         for i, row in enumerate(self.board):
             print(' |'.join([repr(piece) if isinstance(piece, Piece) else ' ' for piece in row]), "  ", 8 - i)
+          
         print()
 
     # takes a position as input and returns the piece located at that position on the board.
