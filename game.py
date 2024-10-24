@@ -383,9 +383,15 @@ class ChessBoard:
         ] 
 
     def print_board(self):
-        print("A  B  C  D  E  F  G  H\n")
+        piece_symbols = {
+            Rook: 'R', Knight: 'N', Bishop: 'B', Queen: 'Q', King: 'K', Pawn: 'P'
+        } # maps chess piece classes to their standard chess symbols.
+
+
+        print("A |B |C |D |E |F |G |H\n")
         for i, row in enumerate(self.board):
-            print('  '.join([repr(piece) if isinstance(piece, Piece) else ' ' for piece in row]), " ", 8 - i)
+            print(' |'.join([repr(piece) if isinstance(piece, Piece) else ' ' for piece in row]), "  ", 8 - i)
+          
         print()
 
     # takes a position as input and returns the piece located at that position on the board.
@@ -423,7 +429,7 @@ class ChessBoard:
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
-        if not piece:
+        if piece == ' ':
             print("No piece at start position.")
             return False
         if piece.color != self.turn:
