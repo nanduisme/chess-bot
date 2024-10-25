@@ -227,6 +227,12 @@ class King(Piece):
         ]
         moves = []  # List to store valid moves
         x, y = pos  # Current position of the king
+         # Initialize a cache to avoid recursion
+        if 'visited_positions' not in board.__dict__:
+            board.visited_positions = set()
+        if pos in board.visited_positions:
+            return []  # Avoid recalculating moves for the same position within the same call stack.
+        board.visited_positions.add(pos)
         for dx, dy in directions:  # Iterate over each direction
             nx, ny = x + dx, y + dy  # Calculate the new position
             if 0 <= nx < 8 and 0 <= ny < 8:  # Ensure the new position is within the board
@@ -241,7 +247,11 @@ class King(Piece):
                     moves.append((x, y + 2))
             if board.castling_rights[self.color]['queenside']:
                 if self._can_castle_queenside(board, pos):
-                    moves.append((x, y - 2))           
+                    moves.append((x, y - 2))   
+
+        # Reset the cache after calculation
+        board.visited_positions.remove(pos)
+                
         return moves  # Return the list of valid moves
 
     def _can_castle_kingside(self, board, pos):
@@ -464,12 +474,7 @@ class ChessBoard:
         
     def is_in_check(self, color):
         # Simplified check detection logic
-        king_pos = None
-        for x in range(8):
-            for y in range(8):
-                if isinstance(self.get_piece((x, y)), King) and self.get_piece((x, y)).color == color:
-                    king_pos = (x, y)
-                    break
+        king_pos = self.find_king(color)
         for x in range(8):
             for y in range(8):
                 target_piece = self.get_piece((x, y))
