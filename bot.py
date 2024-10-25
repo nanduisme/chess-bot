@@ -53,6 +53,8 @@ class Bot:
 
 
 def play_vs_bot():
+    from rich.prompt import Prompt
+
     board = ChessBoard()
     bot = Bot()
 
@@ -63,18 +65,38 @@ def play_vs_bot():
         print()
 
         # Player move (simple manual input for demonstration)
-        start = tuple(
-            input(
-                f"{board.turn.capitalize()}'s turn. Enter start position (FileRank): "
+        while True:
+            start = tuple(
+                Prompt.ask(
+                    f"{board.turn.capitalize()}'s turn. Enter start position (FileRank)"
+                ).upper()
+            )
+            start = ChessBoard.file_rank_to_coords(start[0], start[1])
+
+            if (piece := board.get_piece(start)) == " ":
+                print("[red b]X[/] Please enter a valid starting move")
+                continue
+
+            if not (moves := piece.valid_moves(board, start)):
+                print(f"[red b]X[/] Piece cannot move")
+                continue
+
+            end = Prompt.ask(
+                "Enter the end position (FileRank)",
+                choices=[ChessBoard.coords_to_file_rank(*move) for move in moves],
+                case_sensitive=False,
             ).upper()
-        )
-        start = ChessBoard.file_rank_to_coords(start[0], start[1])
-        end = tuple(input("Enter the end position (FileRank): ").upper())
-        end = ChessBoard.file_rank_to_coords(end[0], end[1])
+            end = ChessBoard.file_rank_to_coords(end[0], end[1])
+
+            break
 
         if board.is_valid_move(start, end):
             board.move_piece(start, end)
-            history.write(ChessBoard.coords_to_file_rank(*start) + ChessBoard.coords_to_file_rank(*end) + "\n")
+            history.write(
+                ChessBoard.coords_to_file_rank(*start)
+                + ChessBoard.coords_to_file_rank(*end)
+                + "\n"
+            )
 
             # Switch turns
             board.turn = BLACK
@@ -93,8 +115,12 @@ def play_vs_bot():
 
             val, move = bot.minimax(board, 3, False)
             board.move_piece(*move)
-            history.write(ChessBoard.coords_to_file_rank(*move[0]) + ChessBoard.coords_to_file_rank(*move[1]) + "\n")
-            
+            history.write(
+                ChessBoard.coords_to_file_rank(*move[0])
+                + ChessBoard.coords_to_file_rank(*move[1])
+                + "\n"
+            )
+
             board.turn = WHITE
 
             if board.is_in_check(board.turn):
@@ -107,8 +133,8 @@ def play_vs_bot():
         else:
             print("Invalid move. Try again.")
 
-
     history.close()
+
 
 if __name__ == "__main__":
     play_vs_bot()

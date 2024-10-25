@@ -20,7 +20,7 @@ class Piece:
         return valid_moves
 
     def __repr__(self):
-        pass
+        return "theres an error somewhere"
 
 
 # Class for Pawn Piece
@@ -65,7 +65,9 @@ class Pawn(Piece):
         else:
             print("Invalid choice")
             return self
-        return self
+    
+    def __repr__(self):
+        return '♙' if self.color != 'white' else '♟'
     
 
 # Class for Rook Piece
