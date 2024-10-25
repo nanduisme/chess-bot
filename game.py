@@ -1,23 +1,10 @@
-import copy 
-# Constants
+import copy     
+    # Constants
 WHITE, BLACK = 'white', 'black'  # Defining constants for white and black pieces
 
 # Chess Pieces Classes
 class Piece:
     def __init__(self, color):
-        self.value = None
-        self.bonus = [
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0],
-            [0, 0, 0, 0, 0, 0, 0, 0]
-        ]
-
-
         self.color = color  # Every piece has a color (white or black)
         self.has_moved = False  # Tracks whether the piece has moved (important for castling)
 
@@ -35,45 +22,51 @@ class Piece:
     def __repr__(self):
         pass
 
+
 # Class for Pawn Piece
 class Pawn(Piece):
-    def __init__(self, color):
-        super().__init__(color)
-        self.value = 100
-        self.bonus = [[0, 0, 0, 0, 0, 0, 0, 0],
-                      [50, 50, 50, 50, 50, 50, 50, 50],
-                      [10, 10, 20, 30, 30, 20, 10, 10],
-                      [5, 5, 10, 25, 25, 10, 5, 5],
-                      [0, 0, 0, 20, 20, 0, 0, 0],
-                      [5, -5, -10, 0, 0, -10, -5, 5],
-                      [5, 10, 10, -20, -20, 10, 10, 5],
-                      [0, 0, 0, 0, 0, 0, 0, 0]]
-
     def valid_moves(self, board, pos, en_passant_target=None):
         moves = []  # List to store valid moves for the pawn
         x, y = pos  # Current position of the pawn
         direction = -1 if self.color == WHITE else 1  # Pawns move up (for white) or down (for black)
 
         # Move forward by one square
-        if 0 <= x + direction and x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
+        if 0 <= x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
             moves.append((x + direction, y))  # Add the forward move
             # Two-square move from starting position
-            if not self.has_moved and 0 <= x + 2 * direction and x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
+            if not self.has_moved and 0 <= x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
                 moves.append((x + 2 * direction, y))  # Add the two-square move
 
         # Diagonal captures
         for dy in [-1, 1]:  # Check both diagonal directions (left and right)
             if 0 <= y + dy < 8:  # Ensure it's within board limits
-                target = board.get_piece((x + direction, y + dy))  # Get the piece diagonally
-                if target != " " and target.color != self.color:  # If there's an enemy piece, capture
-                    moves.append((x + direction, y + dy))
-                # En Passant capture
-                if en_passant_target == (x + direction, y + dy):  # Special rule: capture via en passant
-                    moves.append((x + direction, y + dy))
+                if x + direction >= 0 and x + direction < 8:
+                    target = board.get_piece((x + direction, y + dy))  # Get the piece diagonally
+                    if target != " " and target.color != self.color:  # If there's an enemy piece, capture
+                        moves.append((x + direction, y + dy))
+                     # En Passant capture
+                    if en_passant_target == (x + direction, y + dy):  # Special rule: capture via en passant
+                        moves.append((x + direction, y + dy))
         return moves  # Return the list of valid moves
+
+
+    def pawn_promotion(self, x, y):
+        print("It's a pawn promotion! Choose a piece to promote:\n 1. Queen\n 2. Rook\n 3. Bishop\n 4. Knight")
+
+        choice = int(input("Enter your choice (1-4): "))
+        if choice == 1:
+            return Queen(self.color)
+        elif choice == 2:
+            return Rook(self.color)
+        elif choice == 3:
+            return Bishop(self.color)
+        elif choice == 4:
+            return Knight(self.color)
+        else:
+            print("Invalid choice")
+            return self
+        return self
     
-    def __repr__(self):
-        return '♟' if self.color == WHITE else '♙'
 
 # Class for Rook Piece
 class Rook(Piece):
@@ -113,6 +106,7 @@ class Rook(Piece):
                 nx, ny = nx + dx, ny + dy  # Move further in the same direction
         
         return moves  # Return the list of valid moves
+    
     
     def __repr__(self):
         return '♜' if self.color == WHITE else '♖'
@@ -234,6 +228,12 @@ class King(Piece):
         ]
         moves = []  # List to store valid moves
         x, y = pos  # Current position of the king
+         # Initialize a cache to avoid recursion
+        if 'visited_positions' not in board.__dict__:
+            board.visited_positions = set()
+        if pos in board.visited_positions:
+            return []  # Avoid recalculating moves for the same position within the same call stack.
+        board.visited_positions.add(pos)
         for dx, dy in directions:  # Iterate over each direction
             nx, ny = x + dx, y + dy  # Calculate the new position
             if 0 <= nx < 8 and 0 <= ny < 8:  # Ensure the new position is within the board
@@ -248,7 +248,11 @@ class King(Piece):
                     moves.append((x, y + 2))
             if board.castling_rights[self.color]['queenside']:
                 if self._can_castle_queenside(board, pos):
-                    moves.append((x, y - 2))           
+                    moves.append((x, y - 2))   
+
+        # Reset the cache after calculation
+        board.visited_positions.remove(pos)
+                
         return moves  # Return the list of valid moves
 
     def _can_castle_kingside(self, board, pos):
@@ -416,11 +420,19 @@ class ChessBoard:
         return piece.valid_moves(self, pos, self.en_passant_target)
 
     def move_piece(self, start, end):
-        """Move the piece and handle special cases like castling."""
         sx, sy = start
         ex, ey = end
         piece = self.get_piece(start)
-        
+
+        # Check for en passant
+        if isinstance(piece, Pawn):
+            if (ex, ey) == self.en_passant_target:  # Check if it's an en passant move
+                if piece.color == WHITE:
+                    self.board[sx][ey] = ' '  # Remove the captured black pawn
+                else:
+                    self.board[sx][ey] = ' '  # Remove the captured white pawn
+                self.en_passant_target = None  # Reset en passant target
+
         # Castling move
         if isinstance(piece, King) and abs(ey - sy) == 2:
             if ey > sy:  # Kingside castling
@@ -430,12 +442,27 @@ class ChessBoard:
                 self.board[sx][sy - 1] = self.board[sx][0]  # Move the rook
                 self.board[sx][0] = ' '
 
+        # Move the piece
         self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
 
-        if piece != ' ':
-            piece.has_moved = True
 
+        if piece != ' ':
+            piece.has_moved = True  # Mark the piece as having moved
+
+        # Handle pawn promotion
+        if piece.__repr__() in "♟♙":
+            if (piece.color == BLACK and ex == 7) or (piece.color == WHITE and ex == 0):
+
+                promoted_piece = piece.pawn_promotion(ex, ey)  # Promote the pawn
+                self.board[ex][ey] = promoted_piece  # Place the promoted piece on the board
+            else:
+                self.board[ex][ey] = piece  # Just move the pawn if not promoted
+
+        # Set en passant target
+        if isinstance(piece, Pawn) and abs(sx - ex) == 2:
+            self.en_passant_target = ((sx + ex) // 2, sy)  # Set the en passant target
+            
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
         if piece == ' ':
@@ -453,12 +480,7 @@ class ChessBoard:
         
     def is_in_check(self, color):
         # Simplified check detection logic
-        king_pos = None
-        for x in range(8):
-            for y in range(8):
-                if isinstance(self.get_piece((x, y)), King) and self.get_piece((x, y)).color == color:
-                    king_pos = (x, y)
-                    break
+        king_pos = self.find_king(color)
         for x in range(8):
             for y in range(8):
                 target_piece = self.get_piece((x, y))
