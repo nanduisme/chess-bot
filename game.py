@@ -64,6 +64,8 @@ class Pawn(Piece):
         else:
             print("Invalid choice")
             return self
+        return self
+    
 
 # Class for Rook Piece
 class Rook(Piece):
@@ -407,18 +409,18 @@ class ChessBoard:
         return piece.valid_moves(self, pos, self.en_passant_target)
 
     def move_piece(self, start, end):
-        """Move the piece and handle special cases like castling."""
-        sx, sy = start
         ex, ey = end
         piece = self.get_piece(start)
-        
+
+        # Check for en passant
         if isinstance(piece, Pawn):
             if (ex, ey) == self.en_passant_target:  # Check if it's an en passant move
                 if piece.color == WHITE:
-                    self.board[sx][ey] = ' '  # Remove the captured pawn
+                    self.board[sx][ey] = ' '  # Remove the captured black pawn
                 else:
-                    self.board[sx][ey] = ' '  # Remove the captured pawn
+                    self.board[sx][ey] = ' '  # Remove the captured white pawn
                 self.en_passant_target = None  # Reset en passant target
+
         # Castling move
         if isinstance(piece, King) and abs(ey - sy) == 2:
             if ey > sy:  # Kingside castling
@@ -427,20 +429,24 @@ class ChessBoard:
             else:  # Queenside castling
                 self.board[sx][sy - 1] = self.board[sx][0]  # Move the rook
                 self.board[sx][0] = ' '
-        promoted_piece = piece.pawn_promotion(ex, ey)
-        if promoted_piece != piece:  # If the pawn was promoted
-            self.board[ex][ey] = promoted_piece
 
+        # Move the piece
         self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
+        piece.has_moved = True  # Mark the piece as having moved
 
-        if piece != ' ':
-            piece.has_moved = True
-            
+        # Handle pawn promotion
+        if isinstance(piece, Pawn):
+            if (piece.color == WHITE and ex == 7) or (piece.color == BLACK and ex == 0):
+                promoted_piece = piece.pawn_promotion(ex, ey)  # Promote the pawn
+                self.board[ex][ey] = promoted_piece  # Place the promoted piece on the board
+            else:
+                self.board[ex][ey] = piece  # Just move the pawn if not promoted
+
+        # Set en passant target
         if isinstance(piece, Pawn) and abs(sx - ex) == 2:
             self.en_passant_target = ((sx + ex) // 2, sy)  # Set the en passant target
-
-
+            
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
         if piece == ' ':
