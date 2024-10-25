@@ -40,18 +40,19 @@ class Pawn(Piece):
         # Diagonal captures
         for dy in [-1, 1]:  # Check both diagonal directions (left and right)
             if 0 <= y + dy < 8:  # Ensure it's within board limits
-                target = board.get_piece((x + direction, y + dy))  # Get the piece diagonally
-                if target != " " and target.color != self.color:  # If there's an enemy piece, capture
-                    moves.append((x + direction, y + dy))
-                # En Passant capture
-                if en_passant_target == (x + direction, y + dy):  # Special rule: capture via en passant
-                    moves.append((x + direction, y + dy))
+                if x + direction >= 0 and x + direction < 8:
+                    target = board.get_piece((x + direction, y + dy))  # Get the piece diagonally
+                    if target != " " and target.color != self.color:  # If there's an enemy piece, capture
+                        moves.append((x + direction, y + dy))
+                     # En Passant capture
+                    if en_passant_target == (x + direction, y + dy):  # Special rule: capture via en passant
+                        moves.append((x + direction, y + dy))
         return moves  # Return the list of valid moves
 
 
     def pawn_promotion(self, x, y):
-        if (self.color == WHITE and x == 7) or (self.color == BLACK and x == 0):
-            print("It's a pawn promotion! Choose a piece to promote:\n 1. Queen\n 2. Rook\n 3. Bishop\n 4. Knight")
+        print("It's a pawn promotion! Choose a piece to promote:\n 1. Queen\n 2. Rook\n 3. Bishop\n 4. Knight")
+
         choice = int(input("Enter your choice (1-4): "))
         if choice == 1:
             return Queen(self.color)
@@ -419,6 +420,7 @@ class ChessBoard:
         return piece.valid_moves(self, pos, self.en_passant_target)
 
     def move_piece(self, start, end):
+        sx, sy = start
         ex, ey = end
         piece = self.get_piece(start)
 
@@ -443,11 +445,15 @@ class ChessBoard:
         # Move the piece
         self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
-        piece.has_moved = True  # Mark the piece as having moved
+
+
+        if piece != ' ':
+            piece.has_moved = True  # Mark the piece as having moved
 
         # Handle pawn promotion
-        if isinstance(piece, Pawn):
-            if (piece.color == WHITE and ex == 7) or (piece.color == BLACK and ex == 0):
+        if piece.__repr__() in "♟♙":
+            if (piece.color == BLACK and ex == 7) or (piece.color == WHITE and ex == 0):
+
                 promoted_piece = piece.pawn_promotion(ex, ey)  # Promote the pawn
                 self.board[ex][ey] = promoted_piece  # Place the promoted piece on the board
             else:
