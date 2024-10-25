@@ -25,7 +25,7 @@ class Piece:
 
 # Class for Pawn Piece
 class Pawn(Piece):
-     def __init__(self, color):
+    def __init__(self, color):
         super().__init__(color)
         self.value = 100
         self.bonus = [[0, 0, 0, 0, 0, 0, 0, 0],
