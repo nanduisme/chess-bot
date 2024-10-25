@@ -64,13 +64,31 @@ class Pawn(Piece):
         # Diagonal captures
         for dy in [-1, 1]:  # Check both diagonal directions (left and right)
             if 0 <= y + dy < 8:  # Ensure it's within board limits
-                target = board.get_piece((x + direction, y + dy))  # Get the piece diagonally
-                if target != " " and target.color != self.color:  # If there's an enemy piece, capture
-                    moves.append((x + direction, y + dy))
-                # En Passant capture
-                if en_passant_target == (x + direction, y + dy):  # Special rule: capture via en passant
-                    moves.append((x + direction, y + dy))
+                if x + direction >= 0 and x + direction < 8:
+                    target = board.get_piece((x + direction, y + dy))  # Get the piece diagonally
+                    if target != " " and target.color != self.color:  # If there's an enemy piece, capture
+                        moves.append((x + direction, y + dy))
+                     # En Passant capture
+                    if en_passant_target == (x + direction, y + dy):  # Special rule: capture via en passant
+                        moves.append((x + direction, y + dy))
         return moves  # Return the list of valid moves
+
+
+    def pawn_promotion(self, x, y):
+        print("It's a pawn promotion! Choose a piece to promote:\n 1. Queen\n 2. Rook\n 3. Bishop\n 4. Knight")
+        choice = int(input("Enter your choice (1-4): "))
+        if choice == 1:
+            return Queen(self.color)
+        elif choice == 2:
+            return Rook(self.color)
+        elif choice == 3:
+            return Bishop(self.color)
+        elif choice == 4:
+            return Knight(self.color)
+        else:
+            print("Invalid choice")
+            return self
+        return self
     
     def __repr__(self):
         return '♟' if self.color == WHITE else '♙'
@@ -420,11 +438,19 @@ class ChessBoard:
         return piece.valid_moves(self, pos, self.en_passant_target)
 
     def move_piece(self, start, end):
-        """Move the piece and handle special cases like castling."""
         sx, sy = start
         ex, ey = end
         piece = self.get_piece(start)
-        
+
+        # Check for en passant
+        if isinstance(piece, Pawn):
+            if (ex, ey) == self.en_passant_target:  # Check if it's an en passant move
+                if piece.color == WHITE:
+                    self.board[sx][ey] = ' '  # Remove the captured black pawn
+                else:
+                    self.board[sx][ey] = ' '  # Remove the captured white pawn
+                self.en_passant_target = None  # Reset en passant target
+
         # Castling move
         if isinstance(piece, King) and abs(ey - sy) == 2:
             if ey > sy:  # Kingside castling
@@ -434,11 +460,24 @@ class ChessBoard:
                 self.board[sx][sy - 1] = self.board[sx][0]  # Move the rook
                 self.board[sx][0] = ' '
 
+        # Move the piece
         self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
 
         if piece != ' ':
-            piece.has_moved = True
+            piece.has_moved = True  # Mark the piece as having moved
+
+        # Handle pawn promotion
+        if piece.__repr__() in "♟♙":
+            if (piece.color == BLACK and ex == 7) or (piece.color == WHITE and ex == 0):
+                promoted_piece = piece.pawn_promotion(ex, ey)  # Promote the pawn
+                self.board[ex][ey] = promoted_piece  # Place the promoted piece on the board
+            else:
+                self.board[ex][ey] = piece  # Just move the pawn if not promoted
+
+        # Set en passant target
+        if isinstance(piece, Pawn) and abs(sx - ex) == 2:
+            self.en_passant_target = ((sx + ex) // 2, sy)  # Set the en passant target
 
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
