@@ -401,7 +401,7 @@ class ChessBoard:
         # Returns (rank, file)
         return (8 - int(rank), ord(file) - ord("A"))
     
-     @staticmethod
+    @staticmethod
     def coords_to_file_rank(row, col):
         return chr(ord('A') + col) + str(8 - row)
 

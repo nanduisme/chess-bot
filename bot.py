@@ -42,7 +42,7 @@ class Bot:
         ret_move = ((-1, -1), (-1, -1))
         for move in valid_moves:
             clone = board.clone()
-            clone.move_piece(*move)
+            clone.move_piece(*move, choice="q")
             val, _ = self.minimax(clone, depth - 1, not white_turn)
 
             if (val < ret and not white_turn) or (val > ret and white_turn):
@@ -73,6 +73,8 @@ def play_vs_bot():
                     f"{board.turn.capitalize()}'s turn. Enter start position (FileRank)"
                 ).upper()
             )
+            if len(start) < 2:
+                continue
             start = ChessBoard.file_rank_to_coords(start[0], start[1])
 
             if (piece := board.get_piece(start)) == " " or piece.color != WHITE:
@@ -80,7 +82,7 @@ def play_vs_bot():
                 continue
 
             if not (moves := piece.valid_moves(board, start)):
-                print(f"[red b]X[/] Piece cannot move")
+                print("[red b]X[/] Piece cannot move")
                 continue
 
             end = Prompt.ask(
@@ -116,7 +118,7 @@ def play_vs_bot():
             print()
 
             val, move = bot.minimax(board, 2, False)
-            board.move_piece(*move)
+            board.move_piece(*move, "q")
             history.write(
                 ChessBoard.coords_to_file_rank(*move[0])
                 + ChessBoard.coords_to_file_rank(*move[1])
