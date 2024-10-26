@@ -1,10 +1,23 @@
-import copy     
-    # Constants
+import copy 
+# Constants
 WHITE, BLACK = 'white', 'black'  # Defining constants for white and black pieces
 
 # Chess Pieces Classes
 class Piece:
     def __init__(self, color):
+        self.value = None
+        self.bonus = [
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0],
+            [0, 0, 0, 0, 0, 0, 0, 0]
+        ]
+
+
         self.color = color  # Every piece has a color (white or black)
         self.has_moved = False  # Tracks whether the piece has moved (important for castling)
 
@@ -22,19 +35,30 @@ class Piece:
     def __repr__(self):
         pass
 
-
 # Class for Pawn Piece
 class Pawn(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+        self.value = 100
+        self.bonus = [[0, 0, 0, 0, 0, 0, 0, 0],
+                      [50, 50, 50, 50, 50, 50, 50, 50],
+                      [10, 10, 20, 30, 30, 20, 10, 10],
+                      [5, 5, 10, 25, 25, 10, 5, 5],
+                      [0, 0, 0, 20, 20, 0, 0, 0],
+                      [5, -5, -10, 0, 0, -10, -5, 5],
+                      [5, 10, 10, -20, -20, 10, 10, 5],
+                      [0, 0, 0, 0, 0, 0, 0, 0]]
+
     def valid_moves(self, board, pos, en_passant_target=None):
         moves = []  # List to store valid moves for the pawn
         x, y = pos  # Current position of the pawn
         direction = -1 if self.color == WHITE else 1  # Pawns move up (for white) or down (for black)
 
         # Move forward by one square
-        if 0 <= x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
+        if 0 <= x + direction and x + direction < 8 and board.get_piece((x + direction, y)) == ' ':
             moves.append((x + direction, y))  # Add the forward move
             # Two-square move from starting position
-            if not self.has_moved and 0 <= x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
+            if not self.has_moved and 0 <= x + 2 * direction and x + 2 * direction < 8 and board.get_piece((x + 2 * direction, y)) == ' ':
                 moves.append((x + 2 * direction, y))  # Add the two-square move
 
         # Diagonal captures
@@ -50,23 +74,22 @@ class Pawn(Piece):
         return moves  # Return the list of valid moves
 
 
-    def pawn_promotion(self, x, y):
-        print("It's a pawn promotion! Choose a piece to promote:\n 1. Queen\n 2. Rook\n 3. Bishop\n 4. Knight")
-
-        choice = int(input("Enter your choice (1-4): "))
-        if choice == 1:
+    def pawn_promotion(self, x, y, choice):
+        if choice in "qQ":
             return Queen(self.color)
-        elif choice == 2:
+        elif choice in "rR":
             return Rook(self.color)
-        elif choice == 3:
+        elif choice in "bB":
             return Bishop(self.color)
-        elif choice == 4:
+        elif choice in "nN":
             return Knight(self.color)
         else:
             print("Invalid choice")
             return self
         return self
     
+    def __repr__(self):
+        return '♟' if self.color == WHITE else '♙'
 
 # Class for Rook Piece
 class Rook(Piece):
@@ -107,10 +130,8 @@ class Rook(Piece):
         
         return moves  # Return the list of valid moves
     
-    
     def __repr__(self):
         return '♜' if self.color == WHITE else '♖'
-
 
 # Class for Knight Piece
 class Knight(Piece):
@@ -377,8 +398,8 @@ class ChessBoard:
 
         # Returns (rank, file)
         return (8 - int(rank), ord(file) - ord("A"))
-
-    @staticmethod
+    
+     @staticmethod
     def coords_to_file_rank(row, col):
         return chr(ord('A') + col) + str(8 - row)
 
@@ -404,7 +425,6 @@ class ChessBoard:
         print("A |B |C |D |E |F |G |H\n")
         for i, row in enumerate(self.board):
             print(' |'.join([repr(piece) if isinstance(piece, Piece) else ' ' for piece in row]), "  ", 8 - i)
-          
         print()
 
     # takes a position as input and returns the piece located at that position on the board.
@@ -419,7 +439,7 @@ class ChessBoard:
             return []
         return piece.valid_moves(self, pos, self.en_passant_target)
 
-    def move_piece(self, start, end):
+    def move_piece(self, start, end, choice=None):
         sx, sy = start
         ex, ey = end
         piece = self.get_piece(start)
@@ -446,15 +466,13 @@ class ChessBoard:
         self.board[ex][ey] = piece
         self.board[sx][sy] = ' '
 
-
         if piece != ' ':
             piece.has_moved = True  # Mark the piece as having moved
 
         # Handle pawn promotion
         if piece.__repr__() in "♟♙":
             if (piece.color == BLACK and ex == 7) or (piece.color == WHITE and ex == 0):
-
-                promoted_piece = piece.pawn_promotion(ex, ey)  # Promote the pawn
+                promoted_piece = piece.pawn_promotion(ex, ey,choice)  # Promote the pawn
                 self.board[ex][ey] = promoted_piece  # Place the promoted piece on the board
             else:
                 self.board[ex][ey] = piece  # Just move the pawn if not promoted
@@ -462,7 +480,7 @@ class ChessBoard:
         # Set en passant target
         if isinstance(piece, Pawn) and abs(sx - ex) == 2:
             self.en_passant_target = ((sx + ex) // 2, sy)  # Set the en passant target
-            
+
     def is_valid_move(self, start, end):
         piece = self.get_piece(start)
         if piece == ' ':
@@ -558,7 +576,8 @@ class ChessBoard:
 # Game Loop without AI
 def play_game():
     board = ChessBoard()
-    
+
+
     while True:
         board.print_board()
 
@@ -567,10 +586,16 @@ def play_game():
         start = ChessBoard.file_rank_to_coords(start[0], start[1])
         end = tuple(input("Enter the end position (FileRank): ").upper())
         end = ChessBoard.file_rank_to_coords(end[0], end[1])
-        
+        piece = board.get_piece(start)
 
         if board.is_valid_move(start, end):
-            board.move_piece(start, end)
+
+            if isinstance(piece, Pawn) and (end[0] == 0 or end[0] == 7):
+                # Prompt the user for their choice of promotion
+                choice = input("Promote pawn to (Q, R, B, N): ").upper()
+                board.move_piece(start, end, choice)
+            else:
+                board.move_piece(start, end)
 
             # Switch turns
             board.turn = BLACK if board.turn == WHITE else WHITE
