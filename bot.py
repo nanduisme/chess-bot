@@ -1,4 +1,4 @@
-from game import ChessBoard, Pawn, Piece, BLACK, WHITE
+from game import ChessBoard, Piece, BLACK, WHITE
 
 
 class Bot:
