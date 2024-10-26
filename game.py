@@ -74,16 +74,14 @@ class Pawn(Piece):
         return moves  # Return the list of valid moves
 
 
-    def pawn_promotion(self, x, y):
-        print("It's a pawn promotion! Choose a piece to promote:\n 1. Queen\n 2. Rook\n 3. Bishop\n 4. Knight")
-        choice = int(input("Enter your choice (1-4): "))
-        if choice == 1:
+    def pawn_promotion(self, x, y, choice):
+        if choice in "qQ":
             return Queen(self.color)
-        elif choice == 2:
+        elif choice in "rR":
             return Rook(self.color)
-        elif choice == 3:
+        elif choice in "bB":
             return Bishop(self.color)
-        elif choice == 4:
+        elif choice in "nN":
             return Knight(self.color)
         else:
             print("Invalid choice")
@@ -400,6 +398,10 @@ class ChessBoard:
 
         # Returns (rank, file)
         return (8 - int(rank), ord(file) - ord("A"))
+    
+     @staticmethod
+    def coords_to_file_rank(row, col):
+        return chr(ord('A') + col) + str(8 - row)
 
     #creates the starting layout of the chessboard.Each list contains the pieces in their starting positions, with the black pieces at the top and white pieces at the bottom. Empty squares are represented by spaces 
     def initialize_board(self):
@@ -437,7 +439,7 @@ class ChessBoard:
             return []
         return piece.valid_moves(self, pos, self.en_passant_target)
 
-    def move_piece(self, start, end):
+    def move_piece(self, start, end, choice=None):
         sx, sy = start
         ex, ey = end
         piece = self.get_piece(start)
@@ -470,7 +472,7 @@ class ChessBoard:
         # Handle pawn promotion
         if piece.__repr__() in "♟♙":
             if (piece.color == BLACK and ex == 7) or (piece.color == WHITE and ex == 0):
-                promoted_piece = piece.pawn_promotion(ex, ey)  # Promote the pawn
+                promoted_piece = piece.pawn_promotion(ex, ey,choice)  # Promote the pawn
                 self.board[ex][ey] = promoted_piece  # Place the promoted piece on the board
             else:
                 self.board[ex][ey] = piece  # Just move the pawn if not promoted
@@ -584,10 +586,16 @@ def play_game():
         start = ChessBoard.file_rank_to_coords(start[0], start[1])
         end = tuple(input("Enter the end position (FileRank): ").upper())
         end = ChessBoard.file_rank_to_coords(end[0], end[1])
-        
+        piece = board.get_piece(start)
 
         if board.is_valid_move(start, end):
-            board.move_piece(start, end)
+
+            if isinstance(piece, Pawn) and (end[0] == 0 or end[0] == 7):
+                # Prompt the user for their choice of promotion
+                choice = input("Promote pawn to (Q, R, B, N): ").upper()
+                board.move_piece(start, end, choice)
+            else:
+                board.move_piece(start, end)
 
             # Switch turns
             board.turn = BLACK if board.turn == WHITE else WHITE
