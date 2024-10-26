@@ -2,6 +2,20 @@ from game import ChessBoard, Pawn, Piece, BLACK, WHITE
 
 
 class Bot:
+    def get_piece_val(self, board, pos):
+        """
+        This funciton should return the value of a piece in a given position in the gien board
+        """
+
+        piece = board.get_piece(pos)
+        row, col = pos
+        if isinstance(piece, Piece):  # Check if the piece is a pawn
+            if piece.color == "black":
+                return -(piece.bonus[::-1][row][col] + piece.value)
+            elif piece.color == "white":
+                return piece.bonus[row][col] + piece.value
+        return 0  # Default if no bonus is applicable
+
     def evaluate(self, board):
         score = 0
         for row in range(8):
@@ -37,23 +51,11 @@ class Bot:
 
         return ret, ret_move
 
-    def get_piece_val(self, board, pos):
-        """
-        This funciton should return the value of a piece in a given position in the gien board
-        """
-
-        piece = board.get_piece(pos)
-        row, col = pos
-        if isinstance(piece, Piece):  # Check if the piece is a pawn
-            if piece.color == "black":
-                return -(piece.bonus[::-1][row][col] + piece.value)
-            elif piece.color == "white":
-                return piece.bonus[row][col] + piece.value
-        return 0  # Default if no bonus is applicable
 
 
 def play_vs_bot():
     from rich.prompt import Prompt
+    from rich import print
 
     board = ChessBoard()
     bot = Bot()
@@ -73,7 +75,7 @@ def play_vs_bot():
             )
             start = ChessBoard.file_rank_to_coords(start[0], start[1])
 
-            if (piece := board.get_piece(start)) == " ":
+            if (piece := board.get_piece(start)) == " " or piece.color != WHITE:
                 print("[red b]X[/] Please enter a valid starting move")
                 continue
 
@@ -113,7 +115,7 @@ def play_vs_bot():
             board.print_board()
             print()
 
-            val, move = bot.minimax(board, 3, False)
+            val, move = bot.minimax(board, 2, False)
             board.move_piece(*move)
             history.write(
                 ChessBoard.coords_to_file_rank(*move[0])
