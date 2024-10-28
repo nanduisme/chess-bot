@@ -35,6 +35,9 @@ class Piece:
     def __repr__(self):
         return "theres an error somewhere"
 
+    def __hash__(self):
+        return hash(hash(self.value) + hash(self.color) + hash(self.has_moved))
+
 # Class for Pawn Piece
 class Pawn(Piece):
     def __init__(self, color):
@@ -89,9 +92,6 @@ class Pawn(Piece):
     
     def __repr__(self):
         return '♙' if self.color != 'white' else '♟'
-    
-    def __repr__(self):
-        return '♟' if self.color == WHITE else '♙'
 
 # Class for Rook Piece
 class Rook(Piece):
@@ -572,6 +572,12 @@ class ChessBoard:
         
         return in_check
 
+    def __hash__(self):
+        sum = 0
+        for row in self.board:
+            for col in row:
+                sum += hash(self.board(row, col))
+        return hash(sum)
 
 
 

@@ -14,9 +14,43 @@ class Bot:
                 score += self.get_piece_val(board, (row, col))
         return score
 
-    def minimax(
-        self, board: ChessBoard, alpha, beta, depth=0, white_turn=False
-    ):
+    def order_moves(self, board, moves, white_turn=False):
+        # Valid moves for the enemy
+        valid_move_ends = []
+        for row in range(8):
+            for col in range(8):
+                if (piece := board.get_piece((row, col))) != " " and (
+                    (piece.color == WHITE and not white_turn)
+                    or (piece.color == BLACK and white_turn)
+                ):
+                    temp_moves = board.get_valid_moves((row, col))
+                    if moves:
+                        valid_move_ends.extend(temp_moves)
+
+        scores = {}
+        for move in moves:
+            start, end = move
+            end_piece = board.get_piece(end)
+
+            move_score = 0
+
+            if end_piece != " ":
+                move_score = 10 * abs(self.get_piece_val(board, start)) - abs(
+                    self.get_piece_val(board, end)
+                )
+
+            if isinstance(end_piece, Pawn) and end[0] == 7:
+                move_score += 900  # Queen val bc only promoting to queen
+
+            if end in valid_move_ends:
+                move_score -= abs(self.get_piece_val(board, end))
+
+            scores[move] = move_score
+
+        boinks = sorted(moves, key=lambda x: scores[x], reverse=True)
+        return boinks
+
+    def minimax(self, board, alpha, beta, depth=0, white_turn=False):
         if depth == 0 or board.is_checkmate():
             return self.evaluate(board), None
 
@@ -33,19 +67,22 @@ class Bot:
                             list(map(lambda x: ((row, col), x), moves))
                         )
 
+        valid_moves = self.order_moves(board, valid_moves, white_turn)
         if white_turn:
             ret = float("-inf")
             ret_move = ((-1, -1), (-1, -1))
             for move in valid_moves:
                 clone = board.clone()
                 clone.move_piece(*move, "q")
-                val, _ = self.minimax(clone,alpha,beta, depth - 1, not white_turn)
-                ret = max(ret, val )
+                val, _ = self.minimax(
+                    clone, alpha, beta, depth - 1, not white_turn
+                )
+                ret = max(ret, val)
                 alpha = max(alpha, ret)
                 ret_move = move
                 if beta <= alpha:
-                     break
-                
+                    break
+
             return ret, ret_move
         else:
             ret = float("+inf")
@@ -53,14 +90,16 @@ class Bot:
             for move in valid_moves:
                 clone = board.clone()
                 clone.move_piece(*move, "q")
-                val,_ = self.minimax(clone,alpha,beta,depth - 1, white_turn)
+                val, _ = self.minimax(
+                    clone, alpha, beta, depth - 1, white_turn
+                )
                 ret = min(ret, val)
                 beta = min(beta, ret)
                 ret_move = move
                 if beta <= alpha:
                     break
+
             return ret, ret_move
-    
 
     def get_piece_val(self, board, pos):
         """
@@ -147,19 +186,21 @@ def play_vs_bot():
         else:
             print("Invalid move. Try again.")
 
+
 def get_metrics():
     import time
 
-    board = ChessBoard.from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R")
+    board = ChessBoard.from_fen(
+        "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R"
+    )
     bot = Bot()
     board.print_board()
     board.move_piece((6, 4), (2, 0))
     board.print_board()
 
-    
     bot.evaluation_count = 0
     start = time.time()
-    val, move = bot.minimax(board, float("-inf"), float("+inf"), 4, False)
+    val, move = bot.minimax(board, float("-inf"), float("+inf"), 2, False)
     end = time.time() - start
 
     board.move_piece(*move, "q")
