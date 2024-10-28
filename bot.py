@@ -17,10 +17,7 @@ class Bot:
     def minimax(
         self, board: ChessBoard, alpha, beta, depth=0, white_turn=False
     ):
-        self.evaluation_count = 0
-
         if depth == 0 or board.is_checkmate():
-            self.evaluation_count += 1
             return self.evaluate(board), None
 
         valid_moves = []
@@ -162,7 +159,7 @@ def get_metrics():
     
     bot.evaluation_count = 0
     start = time.time()
-    val, move = bot.minimax(board, float("-inf"), float("+inf"), 3, False)
+    val, move = bot.minimax(board, float("-inf"), float("+inf"), 4, False)
     end = time.time() - start
 
     board.move_piece(*move, "q")
