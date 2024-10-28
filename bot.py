@@ -1,7 +1,72 @@
-from game import ChessBoard, Piece, BLACK, WHITE
-
+from game import ChessBoard, Pawn, Piece, BLACK, WHITE
+import time
 
 class Bot:
+    def __init__(self):
+        self.evaluation_count = 0
+
+    def evaluate(self, board):
+        score = 0
+        for row in range(8):
+            for col in range(8):
+                score += self.get_piece_val(board, (row, col))
+        return score
+
+    def minimax(self, board: ChessBoard, alpha , beta,depth=0, white_turn=False):
+        self.evaluation_count = 0
+
+        if depth == 0 or board.is_checkmate():
+            return self.evaluate(board), None
+
+        valid_moves = []
+        for row in range(8):
+            for col in range(8):
+                if (piece := board.get_piece((row, col))) != " " and (
+                    (piece.color == WHITE and white_turn)
+                    or (piece.color == BLACK and not white_turn)
+                ):
+                    moves = board.get_valid_moves((row, col))
+                    if moves:
+                        valid_moves.extend(list(map(lambda x: ((row, col), x), moves)))
+
+        if white_turn:
+            ret = float("-inf")
+            ret_move = ((-1, -1), (-1, -1))
+            for move in valid_moves:
+                self.evaluation_count += 1
+                clone = board.clone()
+                clone.move_piece(*move)
+                val, _ = self.minimax(clone,alpha,beta, depth - 1, not white_turn)
+                ret = max(ret, val )
+                alpha = max(alpha, ret)
+                ret_move=move
+                if beta <= alpha:
+                     break
+                else:
+                    self.evaluation_count += 1
+            return ret, ret_move
+        else:
+            ret = float("+inf")
+            ret_move = ((-1, -1), (-1, -1))
+            for move in valid_moves:
+                self.evaluation_count += 1
+                clone = board.clone()
+                clone.move_piece(*move)
+                val,_ = self.minimax(clone,alpha,beta,depth - 1, white_turn)
+                ret = min(ret, val)
+                beta = min(beta, ret)
+                ret_move = move
+                if beta <= alpha:
+                    break
+            return ret, ret_move
+    
+    def evaluation_counter(self):
+        '''
+        Returns the times the board was evaluated
+        '''
+        return self.evaluation_count
+        
+
     def get_piece_val(self, board, pos):
         """
         This funciton should return the value of a piece in a given position in the gien board
@@ -16,129 +81,70 @@ class Bot:
                 return piece.bonus[row][col] + piece.value
         return 0  # Default if no bonus is applicable
 
-    def evaluate(self, board):
-        score = 0
-        for row in range(8):
-            for col in range(8):
-                score += self.get_piece_val(board, (row, col))
-        return score
 
-    def minimax(self, board: ChessBoard, depth=0, white_turn=False):
-        if depth == 0 or board.is_checkmate():
-            return self.evaluate(board), (-1, -1)
-
-        valid_moves = []
-        for row in range(8):
-            for col in range(8):
-                if (piece := board.get_piece((row, col))) != " " and (
-                    (piece.color == WHITE and white_turn)
-                    or (piece.color == BLACK and not white_turn)
-                ):
-                    moves = board.get_valid_moves((row, col))
-                    if moves:
-                        valid_moves.extend(list(map(lambda x: ((row, col), x), moves)))
-
-        ret = float("-inf") if white_turn else float("inf")
-        ret_move = ((-1, -1), (-1, -1))
-        for move in valid_moves:
-            clone = board.clone()
-            clone.move_piece(*move, choice="q")
-            val, _ = self.minimax(clone, depth - 1, not white_turn)
-
-            if (val < ret and not white_turn) or (val > ret and white_turn):
-                ret = val
-                ret_move = move
-
-        return ret, ret_move
-
-
-
+                
 def play_vs_bot():
-    from rich.prompt import Prompt
-    from rich import print
-
-    board = ChessBoard()
-    bot = Bot()
-
-    history = open("./prev.txt", "w")
+    board = ChessBoard()  # Initialize the chessboard
+    bot = Bot()  # Initialize the bot
 
     while True:
-        board.print_board()
+        board.print_board()  # Display the board
         print()
 
-        # Player move (simple manual input for demonstration)
-        while True:
+        # Player move
+        try:
             start = tuple(
-                Prompt.ask(
-                    f"{board.turn.capitalize()}'s turn. Enter start position (FileRank)"
+                input(
+                    f"{board.turn.capitalize()}'s turn. Enter start position (FileRank): "
                 ).upper()
             )
-            if len(start) < 2:
-                continue
             start = ChessBoard.file_rank_to_coords(start[0], start[1])
-
-            if (piece := board.get_piece(start)) == " " or piece.color != WHITE:
-                print("[red b]X[/] Please enter a valid starting move")
-                continue
-
-            if not (moves := piece.valid_moves(board, start)):
-                print("[red b]X[/] Piece cannot move")
-                continue
-
-            end = Prompt.ask(
-                "Enter the end position (FileRank)",
-                choices=[ChessBoard.coords_to_file_rank(*move) for move in moves],
-                case_sensitive=False,
-            ).upper()
+            end = tuple(input("Enter the end position (FileRank): ").upper())
             end = ChessBoard.file_rank_to_coords(end[0], end[1])
-
-            break
+        except Exception as e:
+            print(f"Invalid input: {e}. Please try again.")
+            continue
 
         if board.is_valid_move(start, end):
-            board.move_piece(start, end)
-            history.write(
-                ChessBoard.coords_to_file_rank(*start)
-                + ChessBoard.coords_to_file_rank(*end)
-                + "\n"
-            )
+            board.move_piece(start, end)  # Execute player's move
 
-            # Switch turns
+            # Switch to bot's turn
             board.turn = BLACK
 
-            # Check for checkmate
-
+            # Check for checkmate or check
             if board.is_in_check(board.turn):
                 if board.is_checkmate():
                     print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
                     break
                 else:
-                    print("check!!")
+                    print("Check!")
 
             board.print_board()
             print()
 
-            val, move = bot.minimax(board, 2, False)
-            board.move_piece(*move, "q")
-            history.write(
-                ChessBoard.coords_to_file_rank(*move[0])
-                + ChessBoard.coords_to_file_rank(*move[1])
-                + "\n"
-            )
+            # Bot's move
+            start_time = time.time()  # Start time for bot’s move
+            val, move = bot.minimax(board, float("-inf"), float("+inf"), depth=3, white_turn=False)
+            move_time = time.time() - start_time  # Calculate time taken
 
+            # Execute bot's move
+            board.move_piece(*move)
+            print(f"Bot played: {move}")
+            print(f"Time taken: {move_time:.4f} seconds")
+            print(f"Evaluations: {bot.evaluation_counter()}")
+
+            # Switch back to player's turn
             board.turn = WHITE
 
+            # Check for checkmate or check
             if board.is_in_check(board.turn):
                 if board.is_checkmate():
                     print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
                     break
                 else:
-                    print("check!!")
-
+                    print("Check!")
         else:
             print("Invalid move. Try again.")
-
-    history.close()
-
 
 if __name__ == "__main__":
     play_vs_bot()
