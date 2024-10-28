@@ -1,6 +1,7 @@
 from game import ChessBoard, Pawn, Piece, BLACK, WHITE
 import time
 
+
 class Bot:
     def __init__(self):
         self.evaluation_count = 0
@@ -13,9 +14,13 @@ class Bot:
                 score += self.get_piece_val(board, (row, col))
         return score
 
-    def minimax(self, board: ChessBoard, alpha , beta,depth=0, white_turn=False):
+    def minimax(
+        self, board: ChessBoard, alpha, beta, depth=0, white_turn=False
+    ):
+        self.evaluation_count = 0
 
         if depth == 0 or board.is_checkmate():
+            self.evaluation_count += 1
             return self.evaluate(board), None
 
         valid_moves = []
@@ -27,7 +32,9 @@ class Bot:
                 ):
                     moves = board.get_valid_moves((row, col))
                     if moves:
-                        valid_moves.extend(list(map(lambda x: ((row, col), x), moves)))
+                        valid_moves.extend(
+                            list(map(lambda x: ((row, col), x), moves))
+                        )
 
         if white_turn:
             ret = float("-inf")
@@ -38,7 +45,7 @@ class Bot:
                 val, _ = self.minimax(clone,alpha,beta, depth - 1, not white_turn)
                 ret = max(ret, val )
                 alpha = max(alpha, ret)
-                ret_move=move
+                ret_move = move
                 if beta <= alpha:
                      break
                 
@@ -73,7 +80,6 @@ class Bot:
         return 0  # Default if no bonus is applicable
 
 
-                
 def play_vs_bot():
     board = ChessBoard()  # Initialize the chessboard
     bot = Bot()  # Initialize the bot
@@ -105,7 +111,9 @@ def play_vs_bot():
             # Check for checkmate or check
             if board.is_in_check(board.turn):
                 if board.is_checkmate():
-                    print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
+                    print(
+                        f"{'Black' if board.turn == WHITE else 'White'} wins!"
+                    )
                     break
                 else:
                     print("Check!")
@@ -116,7 +124,9 @@ def play_vs_bot():
             # Bot's move
             bot.evaluation_count = 0
             start_time = time.time()  # Start time for bot’s move
-            val, move = bot.minimax(board, float("-inf"), float("+inf"), depth=3, white_turn=False)
+            val, move = bot.minimax(
+                board, float("-inf"), float("+inf"), depth=3, white_turn=False
+            )
             move_time = time.time() - start_time  # Calculate time taken
 
             # Execute bot's move
@@ -131,7 +141,9 @@ def play_vs_bot():
             # Check for checkmate or check
             if board.is_in_check(board.turn):
                 if board.is_checkmate():
-                    print(f"{'Black' if board.turn == WHITE else 'White'} wins!")
+                    print(
+                        f"{'Black' if board.turn == WHITE else 'White'} wins!"
+                    )
                     break
                 else:
                     print("Check!")
