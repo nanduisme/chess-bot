@@ -56,7 +56,7 @@ class Bot:
 def play_vs_bot():
     from rich.prompt import Prompt
     from rich import print
-
+    import time
     board = ChessBoard()
     bot = Bot()
 
@@ -116,8 +116,10 @@ def play_vs_bot():
 
             board.print_board()
             print()
-
-            val, move = bot.minimax(board, 2, False)
+            start = time.time()
+            val, move = bot.minimax(board, 3, False)
+            end = time.time() - start
+            print("Time taken to play: ",end)
             board.move_piece(*move, "q")
             history.write(
                 ChessBoard.coords_to_file_rank(*move[0])
