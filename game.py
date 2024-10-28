@@ -574,9 +574,9 @@ class ChessBoard:
 
     def __hash__(self):
         sum = 0
-        for row in self.board:
-            for col in row:
-                sum += hash(self.board(row, col))
+        for rank in self.board:
+            for piece in rank:
+                sum += hash(piece)
         return hash(sum)
 
 
