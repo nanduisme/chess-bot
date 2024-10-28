@@ -1,5 +1,6 @@
 from game import ChessBoard, Piece, BLACK, WHITE
 
+eval_count = 0
 
 class Bot:
     def get_piece_val(self, board, pos):
@@ -15,8 +16,11 @@ class Bot:
             elif piece.color == "white":
                 return piece.bonus[row][col] + piece.value
         return 0  # Default if no bonus is applicable
-
+        
     def evaluate(self, board):
+        global eval_count
+        eval_count += 1
+
         score = 0
         for row in range(8):
             for col in range(8):
@@ -57,6 +61,7 @@ def play_vs_bot():
     from rich.prompt import Prompt
     from rich import print
     import time
+
     board = ChessBoard()
     bot = Bot()
 
@@ -116,10 +121,16 @@ def play_vs_bot():
 
             board.print_board()
             print()
+
+            global eval_count
+            eval_count = 0
             start = time.time()
             val, move = bot.minimax(board, 3, False)
             end = time.time() - start
-            print("Time taken to play: ",end)
+
+            print("Time taken to play: ", end)
+            print("Eval count: ", eval_count)
+
             board.move_piece(*move, "q")
             history.write(
                 ChessBoard.coords_to_file_rank(*move[0])
@@ -141,6 +152,29 @@ def play_vs_bot():
 
     history.close()
 
+def get_metrics():
+    import time
+
+    board = ChessBoard.from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R")
+    bot = Bot()
+    board.print_board()
+    board.move_piece((6, 4), (2, 0))
+    board.print_board()
+
+    
+    global eval_count
+    eval_count = 0
+    start = time.time()
+    val, move = bot.minimax(board, 4, False)
+    end = time.time() - start
+
+    board.move_piece(*move, "q")
+    board.print_board()
+
+    print("Time taken to play: ", end)
+    print("Eval count: ", eval_count)
+
+    
 
 if __name__ == "__main__":
-    play_vs_bot()
+    get_metrics()
