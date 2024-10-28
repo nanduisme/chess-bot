@@ -6,6 +6,7 @@ class Bot:
         self.evaluation_count = 0
 
     def evaluate(self, board):
+        self.evaluation_count += 1
         score = 0
         for row in range(8):
             for col in range(8):
@@ -13,7 +14,6 @@ class Bot:
         return score
 
     def minimax(self, board: ChessBoard, alpha , beta,depth=0, white_turn=False):
-        self.evaluation_count = 0
 
         if depth == 0 or board.is_checkmate():
             return self.evaluate(board), None
@@ -33,25 +33,22 @@ class Bot:
             ret = float("-inf")
             ret_move = ((-1, -1), (-1, -1))
             for move in valid_moves:
-                self.evaluation_count += 1
                 clone = board.clone()
-                clone.move_piece(*move)
+                clone.move_piece(*move, "q")
                 val, _ = self.minimax(clone,alpha,beta, depth - 1, not white_turn)
                 ret = max(ret, val )
                 alpha = max(alpha, ret)
                 ret_move=move
                 if beta <= alpha:
                      break
-                else:
-                    self.evaluation_count += 1
+                
             return ret, ret_move
         else:
             ret = float("+inf")
             ret_move = ((-1, -1), (-1, -1))
             for move in valid_moves:
-                self.evaluation_count += 1
                 clone = board.clone()
-                clone.move_piece(*move)
+                clone.move_piece(*move, "q")
                 val,_ = self.minimax(clone,alpha,beta,depth - 1, white_turn)
                 ret = min(ret, val)
                 beta = min(beta, ret)
@@ -60,12 +57,6 @@ class Bot:
                     break
             return ret, ret_move
     
-    def evaluation_counter(self):
-        '''
-        Returns the times the board was evaluated
-        '''
-        return self.evaluation_count
-        
 
     def get_piece_val(self, board, pos):
         """
@@ -123,6 +114,7 @@ def play_vs_bot():
             print()
 
             # Bot's move
+            bot.evaluation_count = 0
             start_time = time.time()  # Start time for bot’s move
             val, move = bot.minimax(board, float("-inf"), float("+inf"), depth=3, white_turn=False)
             move_time = time.time() - start_time  # Calculate time taken
@@ -131,7 +123,7 @@ def play_vs_bot():
             board.move_piece(*move)
             print(f"Bot played: {move}")
             print(f"Time taken: {move_time:.4f} seconds")
-            print(f"Evaluations: {bot.evaluation_counter()}")
+            print(f"Evaluations: {bot.evaluation_count}")
 
             # Switch back to player's turn
             board.turn = WHITE
@@ -146,5 +138,27 @@ def play_vs_bot():
         else:
             print("Invalid move. Try again.")
 
+def get_metrics():
+    import time
+
+    board = ChessBoard.from_fen("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R")
+    bot = Bot()
+    board.print_board()
+    board.move_piece((6, 4), (2, 0))
+    board.print_board()
+
+    
+    bot.evaluation_count = 0
+    start = time.time()
+    val, move = bot.minimax(board, float("-inf"), float("+inf"), 3, False)
+    end = time.time() - start
+
+    board.move_piece(*move, "q")
+    board.print_board()
+
+    print("Time taken to play: ", end)
+    print("Eval count: ", bot.evaluation_count)
+
+
 if __name__ == "__main__":
-    play_vs_bot()
+    get_metrics()
