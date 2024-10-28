@@ -1,6 +1,8 @@
 import copy 
+
 # Constants
 WHITE, BLACK = 'white', 'black'  # Defining constants for white and black pieces
+
 
 # Chess Pieces Classes
 class Piece:
@@ -35,9 +37,6 @@ class Piece:
     def __repr__(self):
         return "theres an error somewhere"
 
-    def __hash__(self):
-        return hash(hash(self.value) + hash(self.color) + hash(self.has_moved))
-
 # Class for Pawn Piece
 class Pawn(Piece):
     def __init__(self, color):
@@ -51,6 +50,7 @@ class Pawn(Piece):
                       [5, -5, -10, 0, 0, -10, -5, 5],
                       [5, 10, 10, -20, -20, 10, 10, 5],
                       [0, 0, 0, 0, 0, 0, 0, 0]]
+        
 
     def valid_moves(self, board, pos, en_passant_target=None):
         moves = []  # List to store valid moves for the pawn
@@ -571,13 +571,6 @@ class ChessBoard:
         self.board[end[0]][end[1]] = captured_piece
         
         return in_check
-
-    def __hash__(self):
-        sum = 0
-        for rank in self.board:
-            for piece in rank:
-                sum += hash(piece)
-        return hash(sum)
 
 
 
